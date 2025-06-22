@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rankings Coupe du monde des Clubs</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --gold-color: #d4af37;
+            --dark-blue: #0b1a33;
+            --light-text: #f5f5f5;
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', Arial, sans-serif;
+            margin: 0;
+            background-image: linear-gradient(rgba(11, 26, 51, 0.8), rgba(11, 26, 51, 0.8)), url('https://assets-us-01.kc-usercontent.com/31dbcbc6-da4c-0033-328a-d7621d0fa726/d9240cf4-147c-471c-a99a-cbab6e5b0da5/FIFA%20Club%20World%20Cup_1920x1080.png?ver=03-06-2025?w=3840&q=75');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+        }
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 28px 0 24px 0;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .container h1 {
+            text-align: center;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 32px;
+            letter-spacing: 0.5px;
+            color: var(--dark-blue);
+        }
+        .leaderboard-list {
+            width: 95%;
+            margin: 0 auto;
+        }
+        .player-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 1.08em;
+        }
+        .player-row:last-child {
+            border-bottom: none;
+        }
+        .player-rank {
+            font-weight: 700;
+            width: 40px;
+            text-align: center;
+            font-size: 1.1em;
+            color: var(--dark-blue);
+        }
+        .player-row.top1 .player-rank, .player-row.top2 .player-rank, .player-row.top3 .player-rank {
+            color: var(--gold-color);
+            text-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+        }
+        .player-name {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+            margin-left: 10px;
+        }
+        .player-score {
+            font-weight: 700;
+            color: var(--dark-blue);
+            width: 70px;
+            text-align: right;
+        }
+        .refresh-container {
+            text-align: center;
+            margin-top: 24px;
+        }
+        .refresh-button {
+            background: var(--dark-blue);
+            color: var(--light-text);
+            border: 1px solid var(--gold-color);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .refresh-button:hover {
+            background: var(--gold-color);
+            color: var(--dark-blue);
+        }
+        .refresh-button:disabled {
+            background: #9e9e9e;
+            border-color: #9e9e9e;
+            cursor: not-allowed;
+        }
+        .loader {
+            display: none;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: var(--dark-blue);
+        }
+        .main-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 24px;
+            padding: 40px 20px;
+        }
+        .leaderboard-container {
+            flex-shrink: 0;
+            width: 500px;
+        }
+        .details-panel {
+            display: none;
+            width: 900px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .details-panel.visible {
+            display: block;
+        }
+        .player-name {
+            cursor: pointer;
+        }
+        .details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--gold-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .details-header h2 {
+            margin: 0;
+            color: var(--dark-blue);
+            font-size: 1.4em;
+        }
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 2em;
+            line-height: 1;
+            cursor: pointer;
+            color: #888;
+        }
+        .details-section h3 {
+            font-size: 1.1em;
+            color: var(--dark-blue);
+            margin-bottom: 12px;
+            margin-top: 0;
+        }
+        .details-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .details-section li {
+            background: #f0f4f8;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.95em;
+            margin-bottom: 6px;
+        }
+        .details-section p {
+            background: #f0f4f8;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.95em;
+            margin-top: 0;
+        }
+        #details-content {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .details-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .status-correct {
+            background-color: #e9f7ef;
+            color: #1d6a3a;
+            border-left: 4px solid #4CAF50;
+        }
+        .status-incorrect {
+            background-color: #fbe9e7;
+            color: #b71c1c;
+            border-left: 4px solid #f44336;
+        }
+        .status-pending {
+            background-color: #f0f4f8;
+            border-left: 4px solid #9e9e9e;
+        }
+        .details-section li[class*="status-"],
+        .details-section p[class*="status-"] {
+            padding-left: 12px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        /* --- Responsive Design for Mobile --- */
+        @media (max-width: 800px) {
+          body {
+            padding: 0;
+          }
+          .main-wrapper {
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+            gap: 20px;
+          }
+          .leaderboard-container,
+          .details-panel {
+            width: 100%;
+            max-width: 450px; /* Limit width on larger phones/small tablets */
+          }
+          #details-content {
+            flex-direction: column;
+          }
+          .container h1 {
+            font-size: 1.4em;
+          }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="leaderboard-container">
+            <div class="container">
+                <h1>Rankings Coupe du monde des Clubs</h1>
+                <div class="leaderboard-list" id="leaderboard-list"></div>
+                <div class="refresh-container">
+                    <button class="refresh-button" id="refresh-button">Refresh Live Data</button>
+                    <div class="loader" id="loader">Fetching latest scores...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-panel" id="details-panel">
+            <div class="details-header">
+                <h2 id="details-player-name"></h2>
+                <button class="close-button" id="close-button">&times;</button>
+            </div>
+            <div id="details-content"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
