@@ -1,4 +1,3 @@
-# Use an official Python runtime as a parent image
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -10,4 +9,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:app"]  # assumes `app.py` defines app = Flask(...)
