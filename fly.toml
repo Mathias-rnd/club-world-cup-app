@@ -1,4 +1,4 @@
-app = "your-app-name"
+app = "club-world-cup-app"
 
 [build]
 dockerfile = "Dockerfile"
