@@ -117,8 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<ul>${betArray.map(bet => `<li class="status-${bet.status}">${bet.team}</li>`).join('')}</ul>`;
         };
 
-        const createPara = (bet) => {
+        const createPara = (bet, isBar = false) => {
             if (!bet || !bet.team) return '';
+            if (isBar && (bet.status === "correct" || bet.status === "incorrect")) {
+                return `<div class="status-${bet.status}-bar">${bet.team}</div>`;
+            }
             return `<p class="status-${bet.status}">${bet.team}</p>`;
         };
 
@@ -128,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             '1/2 Final': createList(bets['1/2']),
             'Final': createList(bets['Final']),
             'Winner': createPara(bets.Winner),
-            'Best Striker': createPara(bets.BestStriker)
+            'Best Striker': createPara(bets.BestStriker, true)
         };
 
         const createSection = (title) => sections[title] ? `<div class="details-section"><h3>${title}</h3>${sections[title]}</div>` : '';
@@ -178,4 +181,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // Call on page load and every 30 seconds
     fetchLiveGame();
     setInterval(fetchLiveGame, 30000);
+
+    async function renderTopScorers() {
+        const list = document.getElementById('top-scorers-list');
+        try {
+            const res = await fetch('/api/top_scorers');
+            const scorers = await res.json();
+            list.innerHTML = `
+                <ul>
+                    ${scorers.map(s => `
+                        <li>
+                            <span class="data-col data-col-rank">${s.Rank}</span>
+                            <span class="data-col data-col-player">
+                                ${s.CountryFlagURL ? `<img src="${s.CountryFlagURL}" alt="${s.Country}" class="flag-img">` : ''}
+                                <span class="player-name">${s.Player}</span>
+                            </span>
+                            <span class="data-col data-col-team">
+                                ${s.TeamLogoURL ? `<img src="${s.TeamLogoURL}" alt="${s.Team}" class="club-logo-img">` : ''}
+                                <span class="club-name">${s.Team}</span>
+                            </span>
+                            <span class="data-col data-col-goals">${s.Goals}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        } catch (e) {
+            list.innerHTML = '<div>Could not load top scorers.</div>';
+        }
+    }
+
+    // Call this on page load
+    renderTopScorers();
 });

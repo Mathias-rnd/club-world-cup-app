@@ -372,6 +372,173 @@
                 gap: 6px;
             }
         }
+
+        .status-correct-bar {
+            background: linear-gradient(90deg, #4CAF50 0%, #81C784 100%);
+            color: #fff;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-weight: 700;
+            font-size: 1.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-incorrect-bar {
+            background: linear-gradient(90deg, #f44336 0%, #e57373 100%);
+            color: #fff;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-weight: 700;
+            font-size: 1.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .top-scorers-container {
+            text-align: center;
+            margin-top: 24px;
+        }
+        .scorers-dropdown {
+            background: #fff;
+            border: 2px solid var(--gold-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+            padding: 16px 20px;
+            margin-top: 8px;
+            text-align: left;
+            max-width: 350px;
+            width: 100%;
+            position: absolute;
+            z-index: 10;
+        }
+        .scorers-dropdown ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .scorers-dropdown li {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 1.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .scorers-dropdown li:last-child {
+            border-bottom: none;
+        }
+        .top-scorers-card {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 24px 28px 20px 28px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+            text-align: center;
+            border: 2px solid var(--gold-color);
+        }
+        .top-scorers-card h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--dark-blue);
+            margin-top: 0;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+        .top-scorers-list-header {
+            display: flex;
+            font-weight: 700;
+            color: var(--dark-blue);
+            background: #f0f2f5;
+            border-radius: 8px;
+            padding: 12px 10px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .top-scorers-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .top-scorers-list li {
+            display: flex;
+            align-items: center;
+            padding: 14px 10px;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 1.05em;
+        }
+        .top-scorers-list li:last-child {
+            border-bottom: none;
+        }
+        .header-col, .data-col {
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+        .header-col-rank, .data-col-rank {
+            flex-basis: 50px;
+            flex-shrink: 0;
+            justify-content: center;
+            text-align: center;
+            font-weight: 700;
+        }
+        .data-col-rank {
+             color: var(--gold-color);
+             font-size: 1.1em;
+        }
+        .header-col-player, .data-col-player {
+            flex: 2.5 1 0;
+            gap: 12px;
+        }
+        .header-col-team, .data-col-team {
+            flex: 2 1 0;
+            gap: 12px;
+        }
+        .header-col-goals, .data-col-goals {
+            flex-basis: 70px;
+            flex-shrink: 0;
+            justify-content: center;
+            text-align: center;
+            font-weight: 700;
+        }
+        .flag-img, .club-logo-img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .player-name, .club-name {
+            font-weight: 500;
+        }
+        /* Responsive Design */
+        @media (max-width: 700px) {
+            .top-scorers-card {
+                padding: 20px 15px;
+            }
+            .top-scorers-card h2 {
+                font-size: 1.3em;
+            }
+            .header-col-team .club-name-text, .club-name {
+                display: none; /* Hide team text on small screens */
+            }
+             .header-col-player, .data-col-player {
+                flex: 3 1 0;
+            }
+            .header-col-team, .data-col-team {
+                flex: 1 1 0;
+                justify-content: center;
+            }
+            .header-col-goals, .data-col-goals,
+            .header-col-rank, .data-col-rank {
+                flex-basis: 40px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -402,6 +569,16 @@
             </div>
             <div id="details-content"></div>
         </div>
+    </div>
+    <div class="top-scorers-card" id="top-scorers-card">
+        <h2>Top Scorers</h2>
+        <div class="top-scorers-list-header">
+            <span class="header-col header-col-rank">#</span>
+            <span class="header-col header-col-player">Player</span>
+            <span class="header-col header-col-team">Club</span>
+            <span class="header-col header-col-goals">Goals</span>
+        </div>
+        <div id="top-scorers-list" class="top-scorers-list"></div>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

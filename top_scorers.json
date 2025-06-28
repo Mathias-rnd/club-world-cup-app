@@ -1,0 +1,102 @@
+[
+  {
+    "Rank": "1",
+    "Player": "Wessam Abou Ali",
+    "Country": "Palestine",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/179.gif",
+    "Team": "Al Ahly SC",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/1480.gif?fallback=png",
+    "Goals": "3",
+    "Penalties": "1"
+  },
+  {
+    "Rank": "",
+    "Player": "Ángel Di María",
+    "Country": "Argentina",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/58.gif",
+    "Team": "SL Benfica",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/811.gif?fallback=png",
+    "Goals": "3",
+    "Penalties": "3"
+  },
+  {
+    "Rank": "",
+    "Player": "Jamal Musiala",
+    "Country": "Germany",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/11.gif",
+    "Team": "Bayern München",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/222.gif?fallback=png",
+    "Goals": "3",
+    "Penalties": "1"
+  },
+  {
+    "Rank": "",
+    "Player": "Michael Olise",
+    "Country": "France",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/16.gif",
+    "Team": "Bayern München",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/222.gif?fallback=png",
+    "Goals": "3",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "",
+    "Player": "Kenan Yıldız",
+    "Country": "Turkey",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/50.gif",
+    "Team": "Juventus",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/511.gif?fallback=png",
+    "Goals": "3",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "6",
+    "Player": "Leandro Barreiro",
+    "Country": "Luxembourg",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/31.gif",
+    "Team": "SL Benfica",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/811.gif?fallback=png",
+    "Goals": "2",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "",
+    "Player": "Germán Berterame",
+    "Country": "Argentina",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/58.gif",
+    "Team": "CF Monterrey",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/2372.gif?fallback=png",
+    "Goals": "2",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "",
+    "Player": "Kingsley Coman",
+    "Country": "France",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/16.gif",
+    "Team": "Bayern München",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/222.gif?fallback=png",
+    "Goals": "2",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "",
+    "Player": "Jérémy Doku",
+    "Country": "Belgium",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/5.gif",
+    "Team": "Manchester City",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/750.gif?fallback=png",
+    "Goals": "2",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "",
+    "Player": "Phil Foden",
+    "Country": "England",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/12.gif",
+    "Team": "Manchester City",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/750.gif?fallback=png",
+    "Goals": "2",
+    "Penalties": "0"
+  }
+]

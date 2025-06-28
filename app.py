@@ -141,8 +141,12 @@ def get_player_bets(player_name):
 
     # Best Striker is always pending for now
     striker_bet = player_bet.get("BestStriker", "")
+    striker_result = results_data.get("BestStriker", "")
     if striker_bet:
-        formatted_bets["BestStriker"] = {"team": striker_bet, "status": "pending"}
+        status = "pending"
+        if striker_result:
+            status = "correct" if striker_bet == striker_result else "incorrect"
+        formatted_bets["BestStriker"] = {"team": striker_bet, "status": status}
     else:
         formatted_bets["BestStriker"] = None
 
@@ -196,6 +200,15 @@ def get_live_game():
     if live_matches:
         return jsonify(live_matches[0])
     return jsonify(None)
+
+@app.route('/api/top_scorers')
+def get_top_scorers():
+    try:
+        with open("top_scorers.json", "r", encoding="utf-8") as f:
+            scorers = json.load(f)
+        return jsonify(scorers)
+    except Exception as e:
+        return jsonify([]), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001) 
