@@ -48,6 +48,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function fetchLiveGame() {
+        const container = document.getElementById('live-game-container');
+        const content = document.getElementById('live-game-content');
+        try {
+            const res = await fetch('/api/live');
+            const game = await res.json();
+            if (game && game.team1 && game.team2) {
+                container.style.display = 'block';
+                content.innerHTML = `
+                    <span>${game.team1}</span>
+                    <span style="font-weight:700; margin: 0 8px;">${game.score || 'vs'}</span>
+                    <span>${game.team2}</span>
+                `;
+            } else {
+                container.style.display = 'none';
+            }
+        } catch (e) {
+            container.style.display = 'none';
+        }
+    }
+
     // --- Rendering Functions ---
     function renderLeaderboard(players) {
         listEl.innerHTML = '';
@@ -136,4 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateLeaderboardView();
+
+    // Call on page load and every 30 seconds
+    fetchLiveGame();
+    setInterval(fetchLiveGame, 30000);
 });

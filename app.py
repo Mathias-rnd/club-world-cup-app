@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, render_template, url_for
 import csv
 import json
 import os
-from scrape import scrape_with_requests
+from scrape_scores import scrape_with_requests
 
 # --- Constants ---
 BETS_FILE = 'bets.csv'
@@ -15,7 +15,6 @@ POINTS = {
 # --- Flask App Initialization ---
 app = Flask(__name__)
 
-# Test comment for automatic deployment - 2025-01-23
 
 # --- Helper Functions (for calculating scores) ---
 def load_data(file_path):
@@ -41,21 +40,15 @@ def compute_score(bet, results):
         score += POINTS["BestStriker"]
     return score
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static', 'cdmc_logo.ico')
+
 # --- Routes ---
 @app.route('/')
 def index():
     """Serves the main leaderboard HTML file."""
-    return send_from_directory('.', 'leaderboard.html')
-
-@app.route('/script.js')
-def script():
-    """Serves the JavaScript file."""
-    return send_from_directory('.', 'script.js')
-
-@app.route('/favicon.svg')
-def favicon():
-    """Serves the favicon image."""
-    return send_from_directory('.', 'favicon.svg')
+    return render_template('leaderboard.html')
 
 @app.route('/api/leaderboard')
 def get_leaderboard():
@@ -92,6 +85,17 @@ def get_player_bets(player_name):
 
     formatted_bets = {}
 
+    # Get all live games and their leaders
+    matches = scrape_with_requests()
+    live_leaders = set()
+    live_teams = set()
+    for m in matches:
+        if m["status"] == "live":
+            live_teams.add(m["team1"])
+            live_teams.add(m["team2"])
+            if m["winner"] and m["winner"] != "Draw":
+                live_leaders.add(m["winner"])
+
     # Validate team-based rounds
     for round_key in ["1/8", "1/4", "1/2", "Final"]:
         teams = player_bet.get(round_key, "").split(';')
@@ -125,30 +129,49 @@ def get_player_bets(player_name):
 
 @app.route('/api/refresh', methods=['POST'])
 def refresh_live_data():
-    """Scrapes live data from FotMob, updates results.json, and returns status."""
+    """Scrapes live data from scrape_scores, updates only '1/4' in results.json, and returns status."""
     print("Attempting to refresh live data...")
     try:
-        # Use the new, lightweight scraper
-        live_teams = scrape_with_requests(FOTMOB_URL)
-
-        if not live_teams:
-            print("Scraping failed, no teams returned.")
+        matches = scrape_with_requests()
+        if not matches:
+            print("Scraping failed, no matches returned.")
             return jsonify({"success": False, "message": "Scraping failed to return any data."}), 500
 
-        # Since the new scraper returns a flat list, we need to decide how to map it.
-        # For now, we'll assume the top 16 are the "1/8" finalists.
-        # This logic might need adjustment based on FotMob's page layout.
-        results = {"1/8": live_teams[:16]}
+        # Collect winners/leading teams from finished or live matches
+        winners_1_4 = []
+        for m in matches:
+            if m["status"] in ("finished", "live") and m["winner"] and m["winner"] != "Draw":
+                winners_1_4.append(m["winner"])
 
-        with open(RESULTS_FILE, 'w') as f:
-            json.dump(results, f, indent=4)
+        # Load current results.json to preserve '1/8' and other fields
+        if os.path.exists(RESULTS_FILE):
+            with open(RESULTS_FILE, 'r', encoding='utf-8') as f:
+                results = json.load(f)
+        else:
+            results = {"1/8": [], "1/4": [], "1/2": [], "Final": [], "Winner": "", "BestStriker": ""}
 
-        print("Successfully updated results.json.")
+        # Update only the '1/4' field
+        results["1/4"] = sorted(set(winners_1_4))
+
+        with open(RESULTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(results, f, indent=4, ensure_ascii=False)
+
+        print("Successfully updated '1/4' in results.json.")
+        print(f"[DEBUG] Winners/leading teams for 1/4: {winners_1_4}")
         return jsonify({"success": True, "message": "Live data refreshed successfully!"})
 
     except Exception as e:
         print(f"An error occurred during the refresh process: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/live')
+def get_live_game():
+    """Returns the current live game and score, or None if no game is live."""
+    matches = scrape_with_requests()
+    live_matches = [m for m in matches if m["status"] == "live"]
+    if live_matches:
+        return jsonify(live_matches[0])
+    return jsonify(None)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001) 
