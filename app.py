@@ -15,6 +15,8 @@ POINTS = {
 # --- Flask App Initialization ---
 app = Flask(__name__)
 
+# Test comment for automatic deployment - 2025-01-23
+
 # --- Helper Functions (for calculating scores) ---
 def load_data(file_path):
     try:
