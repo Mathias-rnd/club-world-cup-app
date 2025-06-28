@@ -1,23 +1,30 @@
 {
     "1/8": [
         "Palmeiras",
-        "Inter Miami CF",
+        "Botafogo - RJ",
+        "SL Benfica",
+        "Chelsea FC",
         "Paris Saint-Germain",
-        "Botafogo RJ",
-        "Benfica",
+        "Inter Miami CF",
+        "Flamengo RJ",
         "Bayern München",
-        "Flamengo",
-        "Chelsea",
         "Inter",
-        "Monterrey",
-        "Borussia Dortmund",
-        "Fluminense",
-        "Juventus",
+        "Fluminense RJ",
         "Manchester City",
+        "Al Hilal",
         "Real Madrid",
-        "Al Hilal"
+        "Juventus",
+        "Borussia Dortmund",
+        "CF Monterrey"
     ],
-    "1/4": [],
+    "1/4": [
+        "Chelsea FC",
+        "Palmeiras"
+    ],
+    "1/4_losers": [
+        "Botafogo - RJ",
+        "SL Benfica"
+    ],
     "1/2": [],
     "Final": [],
     "Winner": "",

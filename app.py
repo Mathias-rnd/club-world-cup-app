@@ -101,9 +101,30 @@ def get_player_bets(player_name):
         teams = player_bet.get(round_key, "").split(';')
         result_set = results_sets.get(round_key)
         if teams and teams[0]:
-            formatted_bets[round_key] = [
-                {"team": team, "status": check_bet_status(team, result_set)} for team in teams
-            ]
+            formatted_bets[round_key] = []
+            for team in teams:
+                status = "pending"
+                if round_key == "1/4":
+                    # Check if the team is in 1/4 or 1/4_losers
+                    if team in results_data.get("1/4", []):
+                        # Is the match still live?
+                        is_live = False
+                        for m in matches:
+                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] == team:
+                                is_live = True
+                                break
+                        status = "live-correct" if is_live else "correct"
+                    elif team in results_data.get("1/4_losers", []):
+                        # Is the match still live?
+                        is_live = False
+                        for m in matches:
+                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] != team:
+                                is_live = True
+                                break
+                        status = "live-wrong" if is_live else "incorrect"
+                else:
+                    status = check_bet_status(team, result_set)
+                formatted_bets[round_key].append({"team": team, "status": status})
         else:
             formatted_bets[round_key] = []
 
@@ -137,21 +158,24 @@ def refresh_live_data():
             print("Scraping failed, no matches returned.")
             return jsonify({"success": False, "message": "Scraping failed to return any data."}), 500
 
-        # Collect winners/leading teams from finished or live matches
         winners_1_4 = []
+        losers_1_4 = []
         for m in matches:
             if m["status"] in ("finished", "live") and m["winner"] and m["winner"] != "Draw":
                 winners_1_4.append(m["winner"])
+                # Find the loser
+                loser = m["team1"] if m["winner"] == m["team2"] else m["team2"]
+                losers_1_4.append(loser)
 
         # Load current results.json to preserve '1/8' and other fields
         if os.path.exists(RESULTS_FILE):
             with open(RESULTS_FILE, 'r', encoding='utf-8') as f:
                 results = json.load(f)
         else:
-            results = {"1/8": [], "1/4": [], "1/2": [], "Final": [], "Winner": "", "BestStriker": ""}
+            results = {"1/8": [], "1/4": [], "1/4_losers": [], "1/2": [], "Final": [], "Winner": "", "BestStriker": ""}
 
-        # Update only the '1/4' field
         results["1/4"] = sorted(set(winners_1_4))
+        results["1/4_losers"] = sorted(set(losers_1_4))
 
         with open(RESULTS_FILE, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=4, ensure_ascii=False)

@@ -51,16 +51,33 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchLiveGame() {
         const container = document.getElementById('live-game-container');
         const content = document.getElementById('live-game-content');
+        const header = container.querySelector('.live-game-header');
         try {
             const res = await fetch('/api/live');
             const game = await res.json();
             if (game && game.team1 && game.team2) {
-                container.style.display = 'block';
-                content.innerHTML = `
-                    <span>${game.team1}</span>
-                    <span style="font-weight:700; margin: 0 8px;">${game.score || 'vs'}</span>
-                    <span>${game.team2}</span>
-                `;
+                if (game.score && game.score !== "-:-") {
+                    // Game is live
+                    container.style.display = 'block';
+                    header.innerHTML = `<span class="live-dot"></span> LIVE NOW`;
+                    content.innerHTML = `
+                        <span>${game.team1}</span>
+                        <span style="font-weight:700; margin: 0 8px;">${game.score}</span>
+                        <span>${game.team2}</span>
+                    `;
+                } else {
+                    // Game has not started yet
+                    container.style.display = 'block';
+                    header.innerHTML = `Next game`;
+                    // Show the time if available, else just show teams
+                    let timeStr = game.time ? `<span style="margin-right:8px;">${game.time}</span>` : '';
+                    content.innerHTML = `
+                        ${timeStr}
+                        <span>${game.team1}</span>
+                        <span style="font-weight:700; margin: 0 8px;">vs</span>
+                        <span>${game.team2}</span>
+                    `;
+                }
             } else {
                 container.style.display = 'none';
             }
