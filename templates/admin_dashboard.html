@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CDMC</title>
+    <link rel="icon" href="{{ url_for('static', filename='cdmc_logo.ico') }}" type="image/x-icon">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --gold-color: #d4af37;
+            --dark-blue: #0b1a33;
+            --light-text: #f5f5f5;
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+        
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', Arial, sans-serif;
+            margin: 0;
+            background-image: linear-gradient(rgba(11, 26, 51, 0.8), rgba(11, 26, 51, 0.8)), url('https://assets-us-01.kc-usercontent.com/31dbcbc6-da4c-0033-328a-d7621d0fa726/d9240cf4-147c-471c-a99a-cbab6e5b0da5/FIFA%20Club%20World%20Cup_1920x1080.png?ver=03-06-2025?w=3840&q=75');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            border: 2px solid var(--gold-color);
+            overflow: hidden;
+        }
+        
+        .dashboard-header {
+            background: var(--dark-blue);
+            color: var(--light-text);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .logout-btn {
+            background: var(--gold-color);
+            color: var(--dark-blue);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .logout-btn:hover {
+            background: #b8941f;
+        }
+        
+        .back-btn {
+            background: transparent;
+            color: var(--light-text);
+            border: 1px solid var(--gold-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--gold-color);
+            color: var(--dark-blue);
+        }
+        
+        .dashboard-content {
+            padding: 30px;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            color: var(--dark-blue);
+        }
+        
+        .instructions h3 {
+            margin: 0 0 10px 0;
+            color: var(--dark-blue);
+            font-size: 1.1em;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .bets-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .bets-table th {
+            background: var(--dark-blue);
+            color: var(--light-text);
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .bets-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+        
+        .bets-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .bets-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .player-name {
+            font-weight: 600;
+            color: var(--dark-blue);
+            min-width: 120px;
+        }
+        
+        .joker-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-family: 'Inter', Arial, sans-serif;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        
+        .joker-input:focus {
+            outline: none;
+            border-color: var(--gold-color);
+        }
+        
+        .joker-input.error {
+            border-color: #f44336;
+            background: #fbe9e7;
+        }
+        
+        .save-btn {
+            background: var(--gold-color);
+            color: var(--dark-blue);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        
+        .save-btn:hover {
+            background: #b8941f;
+        }
+        
+        .save-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            display: none;
+        }
+        
+        .status-message.success {
+            background: #e9f7ef;
+            color: #1d6a3a;
+            border: 1px solid #4CAF50;
+        }
+        
+        .status-message.error {
+            background: #fbe9e7;
+            color: #b71c1c;
+            border: 1px solid #f44336;
+        }
+        
+        .format-example {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .joker-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .joker-section h3 {
+            color: var(--dark-blue);
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .joker-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .joker-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .joker-label {
+            font-weight: bold;
+            min-width: 120px;
+            color: #555;
+        }
+        
+        .empty-joker {
+            color: #999;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .bets-table {
+                font-size: 0.9em;
+            }
+            
+            .bets-table th,
+            .bets-table td {
+                padding: 8px 6px;
+            }
+            
+            .joker-input {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-cog"></i> Admin Dashboard</h1>
+            <div class="header-actions">
+                <a href="{{ url_for('index') }}" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Leaderboard
+                </a>
+                <a href="{{ url_for('admin_logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+        
+        <div class="dashboard-content">
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> Joker Predictions Management</h3>
+                <ul>
+                    <li><strong>Format:</strong> "Team1 vs Team2: Score1-Score2" (predicted winner first)</li>
+                    <li><strong>Examples:</strong> "Chelsea FC vs Palmeiras: 2-1", "Palmeiras vs Chelsea FC: 1-0"</li>
+                    <li><strong>Scoring:</strong> +4 points for exact score, +2 for correct winner, -3 for wrong winner</li>
+                    <li>Leave empty to remove a joker prediction</li>
+                </ul>
+            </div>
+            
+            <div id="status-message" class="status-message"></div>
+            
+            <table class="bets-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Current Joker Predictions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bet in bets %}
+                    <tr data-player="{{ bet.Name }}">
+                        <td class="player-name">{{ bet.Name }}</td>
+                        <td>
+                            <!-- Round of 16 Jokers (3 jokers) -->
+                            <div class="joker-section">
+                                <h3>🏆 Round of 16 Jokers (3 available)</h3>
+                                <div class="joker-grid">
+                                    <div class="joker-item">
+                                        <span class="joker-label">Joker 1:</span>
+                                        <input type="text" class="joker-input" 
+                                               value="{{ bet.get('Joker_1_8_1', '') }}" 
+                                               placeholder="Team1 vs Team2: Score1-Score2"
+                                               data-player="{{ bet.Name }}" 
+                                               data-joker-key="Joker_1_8_1">
+                                        <button class="save-btn" onclick="saveJoker(this)">Save</button>
+                                    </div>
+                                    <div class="joker-item">
+                                        <span class="joker-label">Joker 2:</span>
+                                        <input type="text" class="joker-input" 
+                                               value="{{ bet.get('Joker_1_8_2', '') }}" 
+                                               placeholder="Team1 vs Team2: Score1-Score2"
+                                               data-player="{{ bet.Name }}" 
+                                               data-joker-key="Joker_1_8_2">
+                                        <button class="save-btn" onclick="saveJoker(this)">Save</button>
+                                    </div>
+                                    <div class="joker-item">
+                                        <span class="joker-label">Joker 3:</span>
+                                        <input type="text" class="joker-input" 
+                                               value="{{ bet.get('Joker_1_8_3', '') }}" 
+                                               placeholder="Team1 vs Team2: Score1-Score2"
+                                               data-player="{{ bet.Name }}" 
+                                               data-joker-key="Joker_1_8_3">
+                                        <button class="save-btn" onclick="saveJoker(this)">Save</button>
+                                    </div>
+                                </div>
+                                <div class="format-example">Format: "Team1 vs Team2: Score1-Score2" (e.g., "Chelsea vs Benfica: 2-1")</div>
+                            </div>
+                            
+                            <!-- Quarter Finals Jokers (2 jokers) -->
+                            <div class="joker-section">
+                                <h3>⚽ Quarter Finals Jokers (2 available)</h3>
+                                <div class="joker-grid">
+                                    <div class="joker-item">
+                                        <span class="joker-label">Joker 1:</span>
+                                        <input type="text" class="joker-input" 
+                                               value="{{ bet.get('Joker_1_4_1', '') }}" 
+                                               placeholder="Team1 vs Team2: Score1-Score2"
+                                               data-player="{{ bet.Name }}" 
+                                               data-joker-key="Joker_1_4_1">
+                                        <button class="save-btn" onclick="saveJoker(this)">Save</button>
+                                    </div>
+                                    <div class="joker-item">
+                                        <span class="joker-label">Joker 2:</span>
+                                        <input type="text" class="joker-input" 
+                                               value="{{ bet.get('Joker_1_4_2', '') }}" 
+                                               placeholder="Team1 vs Team2: Score1-Score2"
+                                               data-player="{{ bet.Name }}" 
+                                               data-joker-key="Joker_1_4_2">
+                                        <button class="save-btn" onclick="saveJoker(this)">Save</button>
+                                    </div>
+                                </div>
+                                <div class="format-example">Format: "Team1 vs Team2: Score1-Score2" (e.g., "Manchester City vs Bayern: 2-1")</div>
+                            </div>
+                            
+                            <!-- Semi-Finals Jokers (1 joker) -->
+                            <div class="joker-section">
+                                <h3>🥇 Semi-Finals Jokers (1 available)</h3>
+                                <div class="joker-grid">
+                                    <div class="joker-item">
+                                        <span class="joker-label">Joker 1:</span>
+                                        <input type="text" class="joker-input" 
+                                               value="{{ bet.get('Joker_1_2_1', '') }}" 
+                                               placeholder="Team1 vs Team2: Score1-Score2"
+                                               data-player="{{ bet.Name }}" 
+                                               data-joker-key="Joker_1_2_1">
+                                        <button class="save-btn" onclick="saveJoker(this)">Save</button>
+                                    </div>
+                                </div>
+                                <div class="format-example">Format: "Team1 vs Team2: Score1-Score2" (e.g., "Paris SG vs Real Madrid: 1-0")</div>
+                            </div>
+                        </td>
+                        <td>
+                            <!-- Actions column removed since each joker has its own save button -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        function saveJoker(button) {
+            const jokerItem = button.closest('.joker-item');
+            const input = jokerItem.querySelector('.joker-input');
+            const playerName = input.dataset.player;
+            const jokerKey = input.dataset.jokerKey;
+            const jokerPrediction = input.value.trim();
+            
+            // Disable button during save
+            button.disabled = true;
+            button.textContent = 'Saving...';
+            
+            // Remove any existing status message
+            const existingStatus = jokerItem.querySelector('.status-message');
+            if (existingStatus) {
+                existingStatus.remove();
+            }
+            
+            fetch('/api/admin/update_joker', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    player_name: playerName,
+                    joker_key: jokerKey,
+                    joker_prediction: jokerPrediction
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = `status-message ${data.success ? 'success' : 'error'}`;
+                statusDiv.textContent = data.message;
+                statusDiv.style.display = 'block';
+                jokerItem.appendChild(statusDiv);
+                
+                // Re-enable button
+                button.disabled = false;
+                button.textContent = 'Save';
+                
+                // Remove status message after 3 seconds
+                setTimeout(() => {
+                    if (statusDiv.parentNode) {
+                        statusDiv.remove();
+                    }
+                }, 3000);
+            })
+            .catch(error => {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'status-message error';
+                statusDiv.textContent = 'Error saving joker prediction';
+                statusDiv.style.display = 'block';
+                jokerItem.appendChild(statusDiv);
+                
+                // Re-enable button
+                button.disabled = false;
+                button.textContent = 'Save';
+                
+                console.error('Error:', error);
+            });
+        }
+        
+        // Add input validation on blur
+        document.querySelectorAll('.joker-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && (!value.includes('vs') || !value.includes(':'))) {
+                    this.classList.add('error');
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+        });
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                const activeElement = document.activeElement;
+                if (activeElement.classList.contains('joker-input')) {
+                    const jokerItem = activeElement.closest('.joker-item');
+                    const saveBtn = jokerItem.querySelector('.save-btn');
+                    saveJoker(saveBtn);
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, send_from_directory, render_template, url_for
+from flask import Flask, jsonify, send_from_directory, render_template, url_for, request, session, redirect
 import csv
 import json
 import os
 from scrape_scores import scrape_with_requests
 import subprocess
+from functools import wraps
 
 # --- Constants ---
 BETS_FILE = 'bets.csv'
@@ -12,10 +13,81 @@ FOTMOB_URL = "https://www.fotmob.com/leagues/78/table/fifa-club-world-cup"
 POINTS = {
     "1/8": 2, "1/4": 4, "1/2": 8, "Final": 16, "Winner": 32, "BestStriker": 20
 }
+ADMIN_PASSWORD = "ale6969"  # Change this to your preferred password
 
 # --- Flask App Initialization ---
 app = Flask(__name__)
+app.secret_key = 'your-secret-key-change-this-in-production'  # Change this in production
 
+# --- Admin Authentication ---
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'admin_logged_in' not in session:
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def validate_joker_format(joker_text):
+    """Validate joker prediction format: 'Team1 vs Team2: Score1-Score2'"""
+    if not joker_text or not joker_text.strip():
+        return True, ""  # Empty is valid
+    
+    try:
+        # Check for the required format
+        if ':' not in joker_text or 'vs' not in joker_text:
+            return False, "Format must be: 'Team1 vs Team2: Score1-Score2'"
+        
+        parts = joker_text.split(':')
+        if len(parts) != 2:
+            return False, "Format must be: 'Team1 vs Team2: Score1-Score2'"
+        
+        match_part = parts[0].strip()
+        score_part = parts[1].strip()
+        
+        # Check teams part
+        teams = match_part.split('vs')
+        if len(teams) != 2:
+            return False, "Format must be: 'Team1 vs Team2: Score1-Score2'"
+        
+        team1 = teams[0].strip()
+        team2 = teams[1].strip()
+        
+        if not team1 or not team2:
+            return False, "Both team names are required"
+        
+        # Check score part
+        score_parts = score_part.split('-')
+        if len(score_parts) != 2:
+            return False, "Score format must be: 'Score1-Score2'"
+        
+        score1 = int(score_parts[0])
+        score2 = int(score_parts[1])
+        
+        if score1 < 0 or score2 < 0:
+            return False, "Scores must be non-negative numbers"
+        
+        return True, ""
+        
+    except ValueError:
+        return False, "Scores must be valid numbers"
+    except Exception as e:
+        return False, f"Invalid format: {str(e)}"
+
+def save_bets_to_csv(bets_data):
+    """Save bets data back to CSV file"""
+    try:
+        with open(BETS_FILE, 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['Name', '1/8', '1/4', '1/2', 'Final', 'Winner', 'BestStriker', 
+                         'Joker_1_8_1', 'Joker_1_8_2', 'Joker_1_8_3', 
+                         'Joker_1_4_1', 'Joker_1_4_2', 'Joker_1_2_1']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for bet in bets_data:
+                writer.writerow(bet)
+        return True, "Bets updated successfully"
+    except Exception as e:
+        return False, f"Error saving bets: {str(e)}"
 
 # --- Helper Functions (for calculating scores) ---
 def load_data(file_path):
@@ -40,8 +112,26 @@ def compute_score(bet, results):
     if bet.get("BestStriker", "").strip().lower() == results.get("BestStriker", "").strip().lower():
         score += POINTS["BestStriker"]
     
-    # Add joker points
-    joker_points = compute_joker_points(bet.get("Joker", ""), results)
+    # Add joker points for all rounds
+    joker_points = 0
+    
+    # Round of 16 jokers (3 jokers)
+    for i in range(1, 4):
+        joker_key = f"Joker_1_8_{i}"
+        if joker_key in bet:
+            joker_points += compute_joker_points(bet.get(joker_key, ""), results)
+    
+    # Quarter finals jokers (2 jokers)
+    for i in range(1, 3):
+        joker_key = f"Joker_1_4_{i}"
+        if joker_key in bet:
+            joker_points += compute_joker_points(bet.get(joker_key, ""), results)
+    
+    # Semi-finals jokers (1 joker)
+    joker_key = "Joker_1_2_1"
+    if joker_key in bet:
+        joker_points += compute_joker_points(bet.get(joker_key, ""), results)
+    
     score += joker_points
     
     return score
@@ -97,12 +187,9 @@ def compute_joker_points(joker_prediction, results):
         return 0
     
     try:
-        print(f"[DEBUG] Processing joker prediction: '{joker_prediction}'")
-        
         # Parse joker prediction: "Team1 vs Team2: Score1-Score2"
         parts = joker_prediction.split(":")
         if len(parts) != 2:
-            print(f"[DEBUG] Invalid format - expected ':' separator")
             return 0
         
         match_part = parts[0].strip()
@@ -111,38 +198,27 @@ def compute_joker_points(joker_prediction, results):
         # Parse teams
         teams = match_part.split("vs")
         if len(teams) != 2:
-            print(f"[DEBUG] Invalid format - expected 'vs' separator")
             return 0
         
         predicted_team1 = teams[0].strip()
         predicted_team2 = teams[1].strip()
         
-        print(f"[DEBUG] Predicted teams: '{predicted_team1}' vs '{predicted_team2}'")
-        
         # Parse predicted score
         score_parts = score_part.split("-")
         if len(score_parts) != 2:
-            print(f"[DEBUG] Invalid score format - expected '-' separator")
             return 0
         
         predicted_score1 = int(score_parts[0])
         predicted_score2 = int(score_parts[1])
         predicted_winner = predicted_team1 if predicted_score1 > predicted_score2 else predicted_team2
         
-        print(f"[DEBUG] Predicted score: {predicted_score1}-{predicted_score2}, winner: '{predicted_winner}'")
-        
         # Get actual result from live data
         matches = scrape_with_requests()
-        print(f"[DEBUG] Found {len(matches)} matches in live data")
         
         for match in matches:
-            print(f"[DEBUG] Checking match: '{match['team1']}' vs '{match['team2']}' (status: {match['status']}, score: {match.get('score', 'N/A')})")
-            
             # Check if this match involves the predicted teams
             if ((team_names_match(match["team1"], predicted_team1) and team_names_match(match["team2"], predicted_team2)) or
                 (team_names_match(match["team1"], predicted_team2) and team_names_match(match["team2"], predicted_team1))):
-                
-                print(f"[DEBUG] Match found! Status: {match['status']}, Score: {match.get('score', 'N/A')}")
                 
                 if match["status"] in ("finished", "live") and match["score"]:
                     # Parse actual score
@@ -152,26 +228,15 @@ def compute_joker_points(joker_prediction, results):
                         actual_score2 = int(actual_score_parts[1])
                         actual_winner = match["team1"] if actual_score1 > actual_score2 else match["team2"]
                         
-                        print(f"[DEBUG] Actual score: {actual_score1}-{actual_score2}, winner: '{actual_winner}'")
-                        
                         # Calculate points
                         if predicted_score1 == actual_score1 and predicted_score2 == actual_score2:
-                            print(f"[DEBUG] EXACT SCORE MATCH! +4 points")
                             return 4  # Exact score prediction
                         elif team_names_match(predicted_winner, actual_winner):
-                            print(f"[DEBUG] CORRECT WINNER! +2 points")
                             return 2  # Correct winner
                         else:
-                            print(f"[DEBUG] WRONG WINNER! -3 points")
                             return -3  # Wrong winner
-                    else:
-                        print(f"[DEBUG] Could not parse actual score: {match['score']}")
-                else:
-                    print(f"[DEBUG] Match not finished or no score available")
                 
                 break
-        else:
-            print(f"[DEBUG] No matching match found for '{predicted_team1}' vs '{predicted_team2}'")
         
         return 0  # Match not found or not finished
         
@@ -289,8 +354,52 @@ def get_player_bets(player_name):
     else:
         formatted_bets["BestStriker"] = None
 
-    # Joker prediction
-    joker_bet = player_bet.get("Joker", "")
+    # Joker predictions for all rounds
+    formatted_bets["Jokers"] = {}
+    
+    # Round of 16 jokers (3 jokers)
+    jokers_1_8 = []
+    for i in range(1, 4):
+        joker_key = f"Joker_1_8_{i}"
+        joker_bet = player_bet.get(joker_key, "")
+        if joker_bet:
+            joker_points = compute_joker_points(joker_bet, results_data)
+            if joker_points == 4:
+                status = "correct"
+            elif joker_points == 2:
+                status = "partial"
+            elif joker_points == -3:
+                status = "incorrect"
+            else:
+                status = "pending"
+            jokers_1_8.append({"team": joker_bet, "status": status, "points": joker_points})
+        else:
+            jokers_1_8.append(None)
+    formatted_bets["Jokers"]["1/8"] = jokers_1_8
+    
+    # Quarter finals jokers (2 jokers)
+    jokers_1_4 = []
+    for i in range(1, 3):
+        joker_key = f"Joker_1_4_{i}"
+        joker_bet = player_bet.get(joker_key, "")
+        if joker_bet:
+            joker_points = compute_joker_points(joker_bet, results_data)
+            if joker_points == 4:
+                status = "correct"
+            elif joker_points == 2:
+                status = "partial"
+            elif joker_points == -3:
+                status = "incorrect"
+            else:
+                status = "pending"
+            jokers_1_4.append({"team": joker_bet, "status": status, "points": joker_points})
+        else:
+            jokers_1_4.append(None)
+    formatted_bets["Jokers"]["1/4"] = jokers_1_4
+    
+    # Semi-finals jokers (1 joker)
+    joker_key = "Joker_1_2_1"
+    joker_bet = player_bet.get(joker_key, "")
     if joker_bet:
         joker_points = compute_joker_points(joker_bet, results_data)
         if joker_points == 4:
@@ -301,9 +410,9 @@ def get_player_bets(player_name):
             status = "incorrect"
         else:
             status = "pending"
-        formatted_bets["Joker"] = {"team": joker_bet, "status": status, "points": joker_points}
+        formatted_bets["Jokers"]["1/2"] = [{"team": joker_bet, "status": status, "points": joker_points}]
     else:
-        formatted_bets["Joker"] = None
+        formatted_bets["Jokers"]["1/2"] = [None]
 
     return jsonify(formatted_bets)
 
@@ -412,6 +521,88 @@ def refresh_top_scorers():
     except Exception as e:
         print(f"Unexpected error during top scorers refresh: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
+
+# --- Admin Routes ---
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return render_template('admin_login.html', error="Invalid password")
+    
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('admin_login'))
+
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    bets = load_data(BETS_FILE)
+    return render_template('admin_dashboard.html', bets=bets)
+
+@app.route('/api/admin/update_joker', methods=['POST'])
+@admin_required
+def update_joker():
+    try:
+        data = request.get_json()
+        player_name = data.get('player_name')
+        joker_key = data.get('joker_key')  # e.g., 'Joker_1_8_1', 'Joker_1_4_2', etc.
+        joker_prediction = data.get('joker_prediction', '').strip()
+        
+        if not player_name:
+            return jsonify({"success": False, "message": "Player name is required"}), 400
+        
+        if not joker_key:
+            return jsonify({"success": False, "message": "Joker key is required"}), 400
+        
+        # Validate joker key format
+        valid_keys = ['Joker_1_8_1', 'Joker_1_8_2', 'Joker_1_8_3', 'Joker_1_4_1', 'Joker_1_4_2', 'Joker_1_2_1']
+        if joker_key not in valid_keys:
+            return jsonify({"success": False, "message": "Invalid joker key"}), 400
+        
+        # Validate joker format
+        is_valid, error_message = validate_joker_format(joker_prediction)
+        if not is_valid:
+            return jsonify({"success": False, "message": error_message}), 400
+        
+        # Load current bets
+        bets = load_data(BETS_FILE)
+        
+        # Find and update the player's joker
+        player_found = False
+        for bet in bets:
+            if bet['Name'] == player_name:
+                bet[joker_key] = joker_prediction
+                player_found = True
+                break
+        
+        if not player_found:
+            return jsonify({"success": False, "message": "Player not found"}), 404
+        
+        # Save back to CSV
+        success, message = save_bets_to_csv(bets)
+        if not success:
+            return jsonify({"success": False, "message": message}), 500
+        
+        return jsonify({"success": True, "message": f"Joker prediction updated for {player_name}"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error updating joker: {str(e)}"}), 500
+
+@app.route('/api/admin/get_bets')
+@admin_required
+def get_bets_for_admin():
+    try:
+        bets = load_data(BETS_FILE)
+        return jsonify({"success": True, "bets": bets})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error loading bets: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001) 

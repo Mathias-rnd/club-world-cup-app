@@ -34,25 +34,33 @@
             background-attachment: fixed;
         }
         .container {
-            max-width: 500px;
+            max-width: 800px;
+            width: 100%;
             margin: 40px auto;
             background: var(--card-bg);
-            padding: 28px 0 24px 0;
+            padding: 24px 28px 20px 28px;
             border-radius: 18px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.13);
             text-align: center;
             border: 2px solid var(--gold-color);
+            margin-left: -32px;
+        }
+        .container.details-open {
+            margin-left: -180px;
+            max-width: 1000px;
+            width: 450px;
+            transition: max-width 0.2s, width 0.2s;
         }
         .container h1 {
-            text-align: center;
-            font-size: 1.6em;
+            font-size: 1.5em;
             font-weight: 700;
-            margin-bottom: 32px;
-            letter-spacing: 0.5px;
             color: var(--dark-blue);
+            margin-top: 0;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
         }
         .leaderboard-list {
-            width: 95%;
+            width: 100%;
             margin: 0 auto;
         }
         .player-row {
@@ -85,6 +93,7 @@
             font-weight: 500;
             color: #333;
             margin-left: 10px;
+            text-align: left;
         }
         .player-score {
             font-weight: 700;
@@ -130,7 +139,6 @@
         }
         .leaderboard-container {
             flex-shrink: 0;
-            width: 500px;
         }
         .details-panel {
             display: none;
@@ -166,6 +174,8 @@
             line-height: 1;
             cursor: pointer;
             color: #888;
+            position: relative;
+            z-index: 1200;
         }
         .details-section h3 {
             font-size: 1.1em;
@@ -286,89 +296,83 @@
 
         /* --- Responsive Design for Mobile --- */
         @media (max-width: 800px) {
-          body {
-            padding: 0;
-            padding-bottom: 40px;
-          }
-          .main-wrapper {
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 10px;
-            gap: 20px;
-          }
-          .leaderboard-container,
-          .details-panel {
-            width: 100%;
-            max-width: 450px; /* Limit width on larger phones/small tablets */
-          }
-          #details-content {
-            flex-direction: column;
-          }
-          .container h1 {
-            font-size: 1.4em;
-          }
-          .top-scorers-card {
-            margin: 0 10px;
-            padding: 20px 15px;
-          }
+            .main-wrapper {
+                flex-direction: column;
+                align-items: center;
+                padding: 20px 10px;
+                gap: 20px;
+            }
+            .leaderboard-container,
+            .details-panel {
+                width: 100%;
+                max-width: 450px;
+            }
+            #details-content {
+                flex-direction: column;
+            }
+            .container h1 {
+                font-size: 1.4em;
+            }
+            .top-scorers-card {
+                margin: 0 10px;
+                padding: 20px 15px;
+            }
         }
-
-        /* iPhone-specific optimizations */
         @media (max-width: 480px) {
-          .main-wrapper {
-            padding: 15px 8px;
-            gap: 15px;
-          }
-          .leaderboard-container,
-          .details-panel {
-            max-width: 100%;
-          }
-          .container {
-            margin: 20px auto;
-            padding: 20px 0 16px 0;
-          }
-          .container h1 {
-            font-size: 1.3em;
-            margin-bottom: 24px;
-          }
-          .player-row {
-            padding: 12px 8px;
-            font-size: 1em;
-          }
-          .player-rank {
-            width: 35px;
-            font-size: 1em;
-          }
-          .player-score {
-            width: 60px;
-            font-size: 0.95em;
-          }
-          .top-scorers-card {
-            padding: 16px 12px;
-            margin: 0 8px;
-          }
-          .top-scorers-card h2 {
-            font-size: 1.2em;
-            margin-bottom: 20px;
-          }
-          .top-scorers-list-header {
-            padding: 10px 8px;
-            font-size: 0.85em;
-          }
-          .top-scorers-list li {
-            padding: 12px 8px;
-            font-size: 0.95em;
-          }
-          .header-col-rank, .data-col-rank {
-            flex-basis: 35px;
-          }
-          .header-col-goals, .data-col-goals {
-            flex-basis: 35px;
-          }
-          .flag-img, .club-logo-img {
-            width: 20px;
-            height: 20px;
-          }
+            .main-wrapper {
+                padding: 15px 8px;
+                gap: 15px;
+            }
+            .leaderboard-container,
+            .details-panel {
+                max-width: 100%;
+            }
+            .container {
+                margin: 20px auto;
+                padding: 20px 0 16px 0;
+            }
+            .container h1 {
+                font-size: 1.3em;
+                margin-bottom: 24px;
+            }
+            .player-row {
+                padding: 12px 8px;
+                font-size: 1em;
+            }
+            .player-rank {
+                width: 35px;
+                font-size: 1em;
+            }
+            .player-score {
+                width: 60px;
+                font-size: 0.95em;
+            }
+            .top-scorers-card {
+                padding: 16px 12px;
+                margin: 0 8px;
+            }
+            .top-scorers-card h2 {
+                font-size: 1.2em;
+                margin-bottom: 20px;
+            }
+            .top-scorers-list-header {
+                padding: 10px 8px;
+                font-size: 0.85em;
+            }
+            .top-scorers-list li {
+                padding: 12px 8px;
+                font-size: 0.95em;
+            }
+            .header-col-rank, .data-col-rank {
+                flex-basis: 35px;
+            }
+            .header-col-goals, .data-col-goals {
+                flex-basis: 35px;
+            }
+            .flag-img, .club-logo-img {
+                width: 20px;
+                height: 20px;
+            }
         }
 
         .live-game-outer {
@@ -618,13 +622,53 @@
             color: var(--gold-color) !important;
             font-weight: 700;
         }
+        
+        .admin-button-container {
+            display: none;
+        }
+        .admin-button {
+            position: fixed;
+            top: 24px;
+            right: 32px;
+            z-index: 1000;
+            background: #fff;
+            color: var(--dark-blue);
+            border: 1.5px solid var(--gold-color);
+            padding: 8px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            transition: background 0.2s, color 0.2s, border 0.2s;
+        }
+        .admin-button:hover {
+            background: var(--gold-color);
+            color: var(--dark-blue);
+            border-color: var(--dark-blue);
+        }
+        @media (max-width: 600px) {
+            .admin-button {
+                top: 10px;
+                right: 10px;
+                padding: 7px 14px;
+                font-size: 0.95em;
+            }
+        }
+        @media (max-width: 900px) {
+            .container.details-open {
+                max-width: 99vw;
+                width: 99vw;
+            }
+        }
     </style>
 </head>
 <body>
+    <a href="/admin/login" class="admin-button" id="admin-btn-topright">Admin</a>
     <div class="main-wrapper">
         <div class="leaderboard-container">
             <div class="container">
-                <h1>Rankings Coupe du monde des Clubs</h1>
+                <h1>Rankings</h1>
                 <div class="live-game-outer">
                     <div class="live-game-container" id="live-game-container" style="display:none;">
                         <div class="live-game-header">
