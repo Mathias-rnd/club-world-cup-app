@@ -122,13 +122,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<p class="status-${bet.status}">${bet.team}</p>`;
         };
 
+        const createJoker = (joker) => {
+            if (!joker || !joker.team) return '';
+            const pointsText = joker.points !== undefined ? ` (${joker.points > 0 ? '+' : ''}${joker.points} pts)` : '';
+            return `<p class="status-${joker.status}">${joker.team}${pointsText}</p>`;
+        };
+
         const sections = {
             '1/8 Final': createList(bets['1/8']),
             '1/4 Final': createList(bets['1/4']),
             '1/2 Final': createList(bets['1/2']),
             'Final': createList(bets['Final']),
             'Winner': createPara(bets.Winner),
-            'Best Striker': createPara(bets.BestStriker, true)
+            'Best Striker': createPara(bets.BestStriker, true),
+            'Joker': createJoker(bets.Joker)
         };
 
         const createSection = (title) => sections[title] ? `<div class="details-section"><h3>${title}</h3>${sections[title]}</div>` : '';
@@ -136,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const column1 = `<div class="details-column">${createSection('1/8 Final')}</div>`;
         const column2 = `<div class="details-column">${createSection('1/4 Final')}</div>`;
         const column3 = `<div class="details-column">${createSection('1/2 Final')}</div>`;
-        const column4 = `<div class="details-column">${createSection('Final')}${createSection('Winner')}${createSection('Best Striker')}</div>`;
+        const column4 = `<div class="details-column">${createSection('Final')}${createSection('Winner')}${createSection('Best Striker')}${createSection('Joker')}</div>`;
 
         detailsContent.innerHTML = column1 + column2 + column3 + column4;
         detailsPanel.classList.add('visible');
