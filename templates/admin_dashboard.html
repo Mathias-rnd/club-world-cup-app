@@ -308,7 +308,7 @@
 <body>
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <h1><i class="fas fa-cog"></i> Admin Dashboard</h1>
+            <h1>🎯 CDMC Admin Dashboard</h1>
             <div class="header-actions">
                 <a href="{{ url_for('index') }}" class="back-btn">
                     <i class="fas fa-arrow-left"></i> Back to Leaderboard
@@ -317,6 +317,7 @@
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </div>
+            <button id="easter-egg-btn" style="position:absolute;top:24px;left:24px;background:none;border:none;cursor:pointer;font-size:18px;opacity:0.5;" title="?">&#10084;</button>
         </div>
         
         <div class="dashboard-content">
@@ -337,7 +338,6 @@
                     <tr>
                         <th>Player</th>
                         <th>Current Joker Predictions</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -347,7 +347,7 @@
                         <td>
                             <!-- Round of 16 Jokers (3 jokers) -->
                             <div class="joker-section">
-                                <h3>🏆 Round of 16 Jokers (3 available)</h3>
+                                <h3>Round of 16 Jokers (3 available)</h3>
                                 <div class="joker-grid">
                                     <div class="joker-item">
                                         <span class="joker-label">Joker 1:</span>
@@ -377,12 +377,10 @@
                                         <button class="save-btn" onclick="saveJoker(this)">Save</button>
                                     </div>
                                 </div>
-                                <div class="format-example">Format: "Team1 vs Team2: Score1-Score2" (e.g., "Chelsea vs Benfica: 2-1")</div>
                             </div>
-                            
                             <!-- Quarter Finals Jokers (2 jokers) -->
                             <div class="joker-section">
-                                <h3>⚽ Quarter Finals Jokers (2 available)</h3>
+                                <h3>Quarter Finals Jokers (2 available)</h3>
                                 <div class="joker-grid">
                                     <div class="joker-item">
                                         <span class="joker-label">Joker 1:</span>
@@ -403,12 +401,10 @@
                                         <button class="save-btn" onclick="saveJoker(this)">Save</button>
                                     </div>
                                 </div>
-                                <div class="format-example">Format: "Team1 vs Team2: Score1-Score2" (e.g., "Manchester City vs Bayern: 2-1")</div>
                             </div>
-                            
                             <!-- Semi-Finals Jokers (1 joker) -->
                             <div class="joker-section">
-                                <h3>🥇 Semi-Finals Jokers (1 available)</h3>
+                                <h3>Semi-Finals Jokers (1 available)</h3>
                                 <div class="joker-grid">
                                     <div class="joker-item">
                                         <span class="joker-label">Joker 1:</span>
@@ -420,11 +416,7 @@
                                         <button class="save-btn" onclick="saveJoker(this)">Save</button>
                                     </div>
                                 </div>
-                                <div class="format-example">Format: "Team1 vs Team2: Score1-Score2" (e.g., "Paris SG vs Real Madrid: 1-0")</div>
                             </div>
-                        </td>
-                        <td>
-                            <!-- Actions column removed since each joker has its own save button -->
                         </td>
                     </tr>
                     {% endfor %}
@@ -530,6 +522,26 @@
                     saveJoker(saveBtn);
                 }
             }
+        });
+        
+        // Easter egg
+        document.getElementById('easter-egg-btn').addEventListener('click', function() {
+            const msg = document.createElement('div');
+            msg.textContent = 'I love you ❤️';
+            msg.style.position = 'fixed';
+            msg.style.top = '60px';
+            msg.style.left = '50%';
+            msg.style.transform = 'translateX(-50%)';
+            msg.style.background = '#fff';
+            msg.style.color = '#d81b60';
+            msg.style.fontWeight = 'bold';
+            msg.style.fontSize = '1.3em';
+            msg.style.padding = '16px 32px';
+            msg.style.borderRadius = '12px';
+            msg.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)';
+            msg.style.zIndex = 9999;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 2000);
         });
     </script>
 </body>
