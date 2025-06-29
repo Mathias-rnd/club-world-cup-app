@@ -27,6 +27,7 @@
             min-height: 100vh;
             font-family: 'Inter', Arial, sans-serif;
             margin: 0;
+            padding-bottom: 60px;
             background-image: linear-gradient(rgba(11, 26, 51, 0.8), rgba(11, 26, 51, 0.8)), url('https://assets-us-01.kc-usercontent.com/31dbcbc6-da4c-0033-328a-d7621d0fa726/d9240cf4-147c-471c-a99a-cbab6e5b0da5/FIFA%20Club%20World%20Cup_1920x1080.png?ver=03-06-2025?w=3840&q=75');
             background-size: cover;
             background-position: center center;
@@ -71,6 +72,10 @@
             color: var(--dark-blue);
         }
         .player-row.top1 .player-rank, .player-row.top2 .player-rank, .player-row.top3 .player-rank {
+            color: var(--gold-color);
+            text-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+        }
+        .player-row.top1 .player-name, .player-row.top1 .player-score {
             color: var(--gold-color);
             text-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
         }
@@ -277,6 +282,7 @@
         @media (max-width: 800px) {
           body {
             padding: 0;
+            padding-bottom: 40px;
           }
           .main-wrapper {
             flex-direction: column;
@@ -294,6 +300,68 @@
           }
           .container h1 {
             font-size: 1.4em;
+          }
+          .top-scorers-card {
+            margin: 0 10px;
+            padding: 20px 15px;
+          }
+        }
+
+        /* iPhone-specific optimizations */
+        @media (max-width: 480px) {
+          .main-wrapper {
+            padding: 15px 8px;
+            gap: 15px;
+          }
+          .leaderboard-container,
+          .details-panel {
+            max-width: 100%;
+          }
+          .container {
+            margin: 20px auto;
+            padding: 20px 0 16px 0;
+          }
+          .container h1 {
+            font-size: 1.3em;
+            margin-bottom: 24px;
+          }
+          .player-row {
+            padding: 12px 8px;
+            font-size: 1em;
+          }
+          .player-rank {
+            width: 35px;
+            font-size: 1em;
+          }
+          .player-score {
+            width: 60px;
+            font-size: 0.95em;
+          }
+          .top-scorers-card {
+            padding: 16px 12px;
+            margin: 0 8px;
+          }
+          .top-scorers-card h2 {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+          }
+          .top-scorers-list-header {
+            padding: 10px 8px;
+            font-size: 0.85em;
+          }
+          .top-scorers-list li {
+            padding: 12px 8px;
+            font-size: 0.95em;
+          }
+          .header-col-rank, .data-col-rank {
+            flex-basis: 35px;
+          }
+          .header-col-goals, .data-col-goals {
+            flex-basis: 35px;
+          }
+          .flag-img, .club-logo-img {
+            width: 20px;
+            height: 20px;
           }
         }
 

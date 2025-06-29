@@ -171,18 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 1. Render the latest available data immediately
-    fetchLiveGame();
-    updateLeaderboardView();
-    renderTopScorers();
-
-    // 2. In the background, trigger backend refreshes for next time
-    fetch('/api/refresh', { method: 'POST' }).catch(() => {});
-    fetch('/api/refresh_top_scorers', { method: 'POST' }).catch(() => {});
-
-    // 3. Keep live game updated every 30 seconds
-    setInterval(fetchLiveGame, 30000);
-
     async function renderTopScorers() {
         const list = document.getElementById('top-scorers-list');
         try {
@@ -220,4 +208,34 @@ document.addEventListener('DOMContentLoaded', () => {
             list.innerHTML = '<div>Could not load top scorers.</div>';
         }
     }
+
+    // 1. Trigger backend refreshes first and wait for completion
+    async function initializePage() {
+        try {
+            // Trigger both refreshes and wait for them to complete
+            await Promise.all([
+                fetch('/api/refresh', { method: 'POST' }),
+                fetch('/api/refresh_top_scorers', { method: 'POST' })
+            ]);
+            
+            // Now fetch and display the fresh data
+            await Promise.all([
+                fetchLiveGame(),
+                updateLeaderboardView(),
+                renderTopScorers()
+            ]);
+        } catch (error) {
+            console.error('Error during initialization:', error);
+            // Fallback to displaying whatever data is available
+            fetchLiveGame();
+            updateLeaderboardView();
+            renderTopScorers();
+        }
+    }
+
+    // Initialize the page with fresh data
+    initializePage();
+
+    // 3. Keep live game updated every 30 seconds
+    setInterval(fetchLiveGame, 30000);
 });
