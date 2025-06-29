@@ -3,6 +3,7 @@ import csv
 import json
 import os
 from scrape_scores import scrape_with_requests
+import subprocess
 
 # --- Constants ---
 BETS_FILE = 'bets.csv'
@@ -209,6 +210,14 @@ def get_top_scorers():
         return jsonify(scorers)
     except Exception as e:
         return jsonify([]), 500
+
+@app.route('/api/refresh_top_scorers', methods=['POST'])
+def refresh_top_scorers():
+    try:
+        subprocess.run(['python3', 'temp.py'], check=True)
+        return jsonify({"success": True, "message": "Top scorers refreshed!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001) 

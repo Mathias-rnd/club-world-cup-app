@@ -2,8 +2,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const listEl = document.getElementById('leaderboard-list');
-    const refreshButton = document.getElementById('refresh-button');
-    const loader = document.getElementById('loader');
     const detailsPanel = document.getElementById('details-panel');
     const detailsPlayerName = document.getElementById('details-player-name');
     const detailsContent = document.getElementById('details-content');
@@ -22,30 +20,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return await res.json();
     }
 
-    async function triggerRefresh() {
-        refreshButton.disabled = true;
-        loader.style.display = 'block';
-
-        try {
-            const res = await fetch('/api/refresh', { method: 'POST' });
-            const data = await res.json();
-            if (!data.success) {
-                throw new Error(data.message || 'Refresh failed on the server.');
-            }
-            console.log("Live data refresh successful!");
-        } catch (error) {
-            console.error('Failed to trigger refresh:', error);
-            loader.textContent = 'Error during refresh. Please try again.';
-        } finally {
-            // Update the leaderboard regardless of success/failure of the refresh
-            await updateLeaderboardView();
-            // Hide loader and re-enable button after a short delay
-            setTimeout(() => {
-                refreshButton.disabled = false;
-                loader.style.display = 'none';
-                loader.textContent = 'Fetching latest scores...'; // Reset text
-            }, 1000);
+    function formatScore(score) {
+        if (!score || score === "-:-") return score;
+        
+        // Handle extra time notation
+        if (score.includes('aet')) {
+            const cleanScore = score.replace('aet', '').trim();
+            return `${cleanScore} (AET)`;
         }
+        
+        // Handle penalty shootout notation
+        if (score.includes('pen')) {
+            const cleanScore = score.replace('pen', '').trim();
+            return `${cleanScore} (PEN)`;
+        }
+        
+        return score;
     }
 
     async function fetchLiveGame() {
@@ -60,9 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Game is live
                     container.style.display = 'block';
                     header.innerHTML = `<span class="live-dot"></span> LIVE NOW`;
+                    const formattedScore = formatScore(game.score);
                     content.innerHTML = `
                         <span>${game.team1}</span>
-                        <span style="font-weight:700; margin: 0 8px;">${game.score}</span>
+                        <span style="font-weight:700; margin: 0 8px;">${formattedScore}</span>
                         <span>${game.team2}</span>
                     `;
                 } else {
@@ -90,22 +81,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderLeaderboard(players) {
         listEl.innerHTML = '';
         if (players.length === 0) {
-            listEl.innerHTML = '<div>No data available. Click Refresh to fetch live data.</div>';
+            listEl.innerHTML = '<div>No data available.</div>';
             return;
         }
+        let currentRank = 1;
+        let lastScore = null;
+        let displayRank = 1;
         players.forEach((player, idx) => {
+            if (lastScore !== null && player.score < lastScore) {
+                displayRank = currentRank;
+            }
             const rowEl = document.createElement('div');
             let rowClass = 'player-row';
-            if (idx === 0) rowClass += ' top1';
-            else if (idx === 1) rowClass += ' top2';
-            else if (idx === 2) rowClass += ' top3';
+            if (displayRank === 1) rowClass += ' top1';
             rowEl.className = rowClass;
             rowEl.innerHTML = `
-                <div class="player-rank">${idx + 1}</div>
+                <div class="player-rank">${displayRank}</div>
                 <div class="player-name" data-player="${player.name}">${player.name}</div>
                 <div class="player-score">${player.score} pts</div>
             `;
             listEl.appendChild(rowEl);
+            lastScore = player.score;
+            currentRank++;
         });
     }
 
@@ -163,8 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
         detailsPanel.classList.remove('visible');
     });
 
-    refreshButton.addEventListener('click', triggerRefresh);
-
     async function updateLeaderboardView() {
         try {
             let players = await fetchLeaderboard();
@@ -176,10 +171,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    updateLeaderboardView();
-
-    // Call on page load and every 30 seconds
+    // 1. Render the latest available data immediately
     fetchLiveGame();
+    updateLeaderboardView();
+    renderTopScorers();
+
+    // 2. In the background, trigger backend refreshes for next time
+    fetch('/api/refresh', { method: 'POST' }).catch(() => {});
+    fetch('/api/refresh_top_scorers', { method: 'POST' }).catch(() => {});
+
+    // 3. Keep live game updated every 30 seconds
     setInterval(fetchLiveGame, 30000);
 
     async function renderTopScorers() {
@@ -187,29 +188,36 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch('/api/top_scorers');
             const scorers = await res.json();
-            list.innerHTML = `
-                <ul>
-                    ${scorers.map(s => `
-                        <li>
-                            <span class="data-col data-col-rank">${s.Rank}</span>
-                            <span class="data-col data-col-player">
-                                ${s.CountryFlagURL ? `<img src="${s.CountryFlagURL}" alt="${s.Country}" class="flag-img">` : ''}
-                                <span class="player-name">${s.Player}</span>
-                            </span>
-                            <span class="data-col data-col-team">
-                                ${s.TeamLogoURL ? `<img src="${s.TeamLogoURL}" alt="${s.Team}" class="club-logo-img">` : ''}
-                                <span class="club-name">${s.Team}</span>
-                            </span>
-                            <span class="data-col data-col-goals">${s.Goals}</span>
-                        </li>
-                    `).join('')}
-                </ul>
-            `;
+            let html = '<ul>';
+            let currentRank = 1;
+            let lastGoals = null;
+            let displayRank = 1;
+            scorers.forEach((s, idx) => {
+                if (lastGoals !== null && s.Goals < lastGoals) {
+                    displayRank = currentRank;
+                }
+                const goldClass = idx === 0 ? 'gold' : '';
+                html += `
+                    <li>
+                        <span class="data-col data-col-rank ${goldClass}">${displayRank}</span>
+                        <span class="data-col data-col-player">
+                            ${s.CountryFlagURL ? `<img src="${s.CountryFlagURL}" alt="${s.Country}" class="flag-img">` : ''}
+                            <span class="player-name">${s.Player}</span>
+                        </span>
+                        <span class="data-col data-col-team">
+                            ${s.TeamLogoURL ? `<img src="${s.TeamLogoURL}" alt="${s.Team}" class="club-logo-img">` : ''}
+                            <span class="club-name">${s.Team}</span>
+                        </span>
+                        <span class="data-col data-col-goals">${s.Goals}</span>
+                    </li>
+                `;
+                lastGoals = s.Goals;
+                currentRank++;
+            });
+            html += '</ul>';
+            list.innerHTML = html;
         } catch (e) {
             list.innerHTML = '<div>Could not load top scorers.</div>';
         }
     }
-
-    // Call this on page load
-    renderTopScorers();
 });

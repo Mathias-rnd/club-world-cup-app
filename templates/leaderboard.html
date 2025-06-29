@@ -490,6 +490,7 @@
         }
         .data-col-rank {
              color: var(--gold-color);
+             color: var(--dark-blue);
              font-size: 1.1em;
         }
         .header-col-player, .data-col-player {
@@ -539,6 +540,10 @@
                 flex-basis: 40px;
             }
         }
+        .data-col-rank.gold, .player-row.top1 .player-rank {
+            color: var(--gold-color) !important;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -555,10 +560,6 @@
                     </div>
                 </div>
                 <div class="leaderboard-list" id="leaderboard-list"></div>
-                <div class="refresh-container">
-                    <button class="refresh-button" id="refresh-button">Refresh Live Data</button>
-                    <div class="loader" id="loader">Fetching latest scores...</div>
-                </div>
             </div>
         </div>
 
