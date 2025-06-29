@@ -41,6 +41,16 @@
   },
   {
     "Rank": "5",
+    "Player": "Pedro Neto",
+    "Country": "Portugal",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/39.gif",
+    "Team": "Chelsea FC",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/544.gif?fallback=png",
+    "Goals": "3",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "6",
     "Player": "Kenan Yıldız",
     "Country": "Turkey",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/50.gif",
@@ -50,7 +60,7 @@
     "Penalties": "0"
   },
   {
-    "Rank": "6",
+    "Rank": "7",
     "Player": "Leandro Barreiro",
     "Country": "Luxembourg",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/31.gif",
@@ -60,7 +70,7 @@
     "Penalties": "0"
   },
   {
-    "Rank": "7",
+    "Rank": "8",
     "Player": "Germán Berterame",
     "Country": "Argentina",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/58.gif",
@@ -70,7 +80,7 @@
     "Penalties": "0"
   },
   {
-    "Rank": "8",
+    "Rank": "9",
     "Player": "Kingsley Coman",
     "Country": "France",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/16.gif",
@@ -80,20 +90,10 @@
     "Penalties": "0"
   },
   {
-    "Rank": "9",
+    "Rank": "10",
     "Player": "Jérémy Doku",
     "Country": "Belgium",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/5.gif",
-    "Team": "Manchester City",
-    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/750.gif?fallback=png",
-    "Goals": "2",
-    "Penalties": "0"
-  },
-  {
-    "Rank": "10",
-    "Player": "Phil Foden",
-    "Country": "England",
-    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/12.gif",
     "Team": "Manchester City",
     "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/750.gif?fallback=png",
     "Goals": "2",

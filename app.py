@@ -205,18 +205,58 @@ def get_live_game():
 @app.route('/api/top_scorers')
 def get_top_scorers():
     try:
+        if not os.path.exists("top_scorers.json"):
+            print("top_scorers.json not found, returning empty list")
+            return jsonify([])
+        
         with open("top_scorers.json", "r", encoding="utf-8") as f:
             scorers = json.load(f)
         return jsonify(scorers)
+    except FileNotFoundError:
+        print("top_scorers.json file not found")
+        return jsonify([])
+    except json.JSONDecodeError as e:
+        print(f"Error parsing top_scorers.json: {e}")
+        return jsonify([])
     except Exception as e:
-        return jsonify([]), 500
+        print(f"Unexpected error reading top_scorers.json: {e}")
+        return jsonify([])
 
 @app.route('/api/refresh_top_scorers', methods=['POST'])
 def refresh_top_scorers():
     try:
-        subprocess.run(['python3', 'temp.py'], check=True)
-        return jsonify({"success": True, "message": "Top scorers refreshed!"})
+        print("Attempting to refresh top scorers...")
+        
+        # Check if temp.py exists
+        if not os.path.exists('temp.py'):
+            print("Error: temp.py not found")
+            return jsonify({"success": False, "message": "temp.py not found"}), 500
+        
+        # Try to run the script
+        result = subprocess.run(['python3', 'temp.py'], 
+                              capture_output=True, 
+                              text=True, 
+                              check=True)
+        
+        print("Top scorers refresh completed successfully")
+        print(f"Output: {result.stdout}")
+        
+        # Verify the file was created/updated
+        if os.path.exists('top_scorers.json'):
+            print("top_scorers.json file exists and was updated")
+            return jsonify({"success": True, "message": "Top scorers refreshed!"})
+        else:
+            print("Error: top_scorers.json was not created")
+            return jsonify({"success": False, "message": "top_scorers.json was not created"}), 500
+            
+    except subprocess.CalledProcessError as e:
+        print(f"Subprocess error: {e}")
+        print(f"Return code: {e.returncode}")
+        print(f"stdout: {e.stdout}")
+        print(f"stderr: {e.stderr}")
+        return jsonify({"success": False, "message": f"Script execution failed: {e.stderr}"}), 500
     except Exception as e:
+        print(f"Unexpected error during top scorers refresh: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
