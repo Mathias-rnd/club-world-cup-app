@@ -124,11 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const createJokerList = (jokers, roundName) => {
             if (!jokers || jokers.length === 0) return '';
-            const jokerItems = jokers.map((joker, index) => {
-                if (!joker || !joker.team) return '';
-                const pointsText = joker.points !== undefined ? ` (${joker.points > 0 ? '+' : ''}${joker.points} pts)` : '';
-                return `<li class="status-${joker.status}">Joker ${index + 1}: ${joker.team}${pointsText}</li>`;
-            }).filter(item => item !== '');
+            
+            // Filter out null/empty jokers and create items
+            const jokerItems = jokers
+                .map((joker, index) => {
+                    if (!joker || !joker.team || !joker.team.trim()) return null;
+                    const pointsText = joker.points !== undefined ? ` (${joker.points > 0 ? '+' : ''}${joker.points} pts)` : '';
+                    return `<li class="status-${joker.status}">Joker ${index + 1}: ${joker.team}${pointsText}</li>`;
+                })
+                .filter(item => item !== null);
             
             if (jokerItems.length === 0) return '';
             return `<div class="details-section"><h3>${roundName} Jokers</h3><ul>${jokerItems.join('')}</ul></div>`;
@@ -148,13 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create joker sections
         const jokerSections = [];
         if (bets.Jokers) {
-            if (bets.Jokers['1/8']) {
+            // Only add joker sections if they have actual jokers
+            if (bets.Jokers['1/8'] && bets.Jokers['1/8'].some(joker => joker && joker.team && joker.team.trim())) {
                 jokerSections.push(createJokerList(bets.Jokers['1/8'], 'Round of 16'));
             }
-            if (bets.Jokers['1/4']) {
+            if (bets.Jokers['1/4'] && bets.Jokers['1/4'].some(joker => joker && joker.team && joker.team.trim())) {
                 jokerSections.push(createJokerList(bets.Jokers['1/4'], 'Quarter Finals'));
             }
-            if (bets.Jokers['1/2']) {
+            if (bets.Jokers['1/2'] && bets.Jokers['1/2'].some(joker => joker && joker.team && joker.team.trim())) {
                 jokerSections.push(createJokerList(bets.Jokers['1/2'], 'Semi-Finals'));
             }
         }

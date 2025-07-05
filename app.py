@@ -213,15 +213,18 @@ def compute_joker_points(joker_prediction, results):
         predicted_score2 = int(score_parts[1])
         predicted_winner = predicted_team1 if predicted_score1 > predicted_score2 else predicted_team2
         
-        # Get actual result from live data
-        matches = scrape_with_requests()
+        # Get actual results from the correct scraper based on the teams involved
+        # For now, we'll check both scrapers since we don't know which round the match belongs to
+        matches_1_8_1_4 = scrape_with_requests()
+        matches_1_2 = scrape_quarters_with_requests()
+        all_matches = matches_1_8_1_4 + matches_1_2
         
-        for match in matches:
+        for match in all_matches:
             # Check if this match involves the predicted teams
             if ((team_names_match(match["team1"], predicted_team1) and team_names_match(match["team2"], predicted_team2)) or
                 (team_names_match(match["team1"], predicted_team2) and team_names_match(match["team2"], predicted_team1))):
                 
-                if match["status"] in ("finished", "live") and match["score"]:
+                if match["status"] == "finished" and match["score"]:
                     # Parse actual score
                     actual_score_parts = match["score"].split(":")
                     if len(actual_score_parts) == 2:
@@ -236,6 +239,9 @@ def compute_joker_points(joker_prediction, results):
                             return 2  # Correct winner
                         else:
                             return -3  # Wrong winner
+                elif match["status"] == "live":
+                    # Match is live, return 0 (pending)
+                    return 0
                 
                 break
         
@@ -366,7 +372,7 @@ def get_player_bets(player_name):
     for i in range(1, 4):
         joker_key = f"Joker_1_8_{i}"
         joker_bet = player_bet.get(joker_key, "")
-        if joker_bet:
+        if joker_bet and joker_bet.strip():
             joker_points = compute_joker_points(joker_bet, results_data)
             if joker_points == 4:
                 status = "correct"
@@ -386,7 +392,7 @@ def get_player_bets(player_name):
     for i in range(1, 3):
         joker_key = f"Joker_1_4_{i}"
         joker_bet = player_bet.get(joker_key, "")
-        if joker_bet:
+        if joker_bet and joker_bet.strip():
             joker_points = compute_joker_points(joker_bet, results_data)
             if joker_points == 4:
                 status = "correct"
@@ -404,7 +410,7 @@ def get_player_bets(player_name):
     # Semi-finals jokers (1 joker)
     joker_key = "Joker_1_2_1"
     joker_bet = player_bet.get(joker_key, "")
-    if joker_bet:
+    if joker_bet and joker_bet.strip():
         joker_points = compute_joker_points(joker_bet, results_data)
         if joker_points == 4:
             status = "correct"
