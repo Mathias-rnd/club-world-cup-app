@@ -18,15 +18,34 @@
         "CF Monterrey"
     ],
     "1/4": [
+        "Al Hilal",
+        "Bayern München",
+        "Borussia Dortmund",
         "Chelsea FC",
-        "Palmeiras"
+        "Fluminense RJ",
+        "Palmeiras",
+        "Paris Saint-Germain",
+        "Real Madrid"
     ],
     "1/4_losers": [
         "Botafogo - RJ",
+        "CF Monterrey",
+        "Flamengo RJ",
+        "Inter",
+        "Inter Miami CF",
+        "Juventus",
+        "Manchester City",
         "SL Benfica"
     ],
-    "1/2": [],
+    "1/2": [
+        "Chelsea FC",
+        "Fluminense RJ"
+    ],
     "Final": [],
     "Winner": "",
-    "BestStriker": ""
+    "BestStriker": "",
+    "1/2_losers": [
+        "Al Hilal",
+        "Palmeiras"
+    ]
 }

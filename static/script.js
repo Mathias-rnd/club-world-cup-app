@@ -240,12 +240,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Trigger backend refreshes first and wait for completion
     async function initializePage() {
         try {
-            // Trigger both refreshes and wait for them to complete
+            // Trigger all results refresh and top scorers refresh, wait for both
             await Promise.all([
-                fetch('/api/refresh', { method: 'POST' }),
+                fetch('/api/refresh_all', { method: 'POST' }),
                 fetch('/api/refresh_top_scorers', { method: 'POST' })
             ]);
-            
             // Now fetch and display the fresh data
             await Promise.all([
                 fetchLiveGame(),

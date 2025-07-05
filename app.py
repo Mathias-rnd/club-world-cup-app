@@ -5,6 +5,7 @@ import os
 from scrape_scores import scrape_with_requests
 import subprocess
 from functools import wraps
+from scrape_quarters import scrape_with_requests as scrape_quarters_with_requests
 
 # --- Constants ---
 BETS_FILE = 'bets.csv'
@@ -273,13 +274,11 @@ def get_player_bets(player_name):
     if not player_bet:
         return jsonify({"success": False, "message": "Player not found."}), 404
 
-    # Helper to check correctness of a bet against a set of results
     def check_bet_status(bet, result_set):
         if not result_set:
             return "pending"
         return "correct" if bet in result_set else "incorrect"
 
-    # Pre-process results into sets for efficient lookup
     results_sets = {
         "1/8": set(results_data.get("1/8", [])),
         "1/4": set(results_data.get("1/4", [])),
@@ -289,16 +288,9 @@ def get_player_bets(player_name):
 
     formatted_bets = {}
 
-    # Get all live games and their leaders
-    matches = scrape_with_requests()
-    live_leaders = set()
-    live_teams = set()
-    for m in matches:
-        if m["status"] == "live":
-            live_teams.add(m["team1"])
-            live_teams.add(m["team2"])
-            if m["winner"] and m["winner"] != "Draw":
-                live_leaders.add(m["winner"])
+    # Use scrape_scores for 1/8 and 1/4, scrape_quarters for 1/2
+    matches_1_8_1_4 = scrape_with_requests()
+    matches_1_2 = scrape_quarters_with_requests()
 
     # Validate team-based rounds
     for round_key in ["1/8", "1/4", "1/2", "Final"]:
@@ -309,19 +301,31 @@ def get_player_bets(player_name):
             for team in teams:
                 status = "pending"
                 if round_key == "1/4":
-                    # Check if the team is in 1/4 or 1/4_losers
                     if team in results_data.get("1/4", []):
-                        # Is the match still live?
                         is_live = False
-                        for m in matches:
+                        for m in matches_1_8_1_4:
                             if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] == team:
                                 is_live = True
                                 break
                         status = "live-correct" if is_live else "correct"
                     elif team in results_data.get("1/4_losers", []):
-                        # Is the match still live?
                         is_live = False
-                        for m in matches:
+                        for m in matches_1_8_1_4:
+                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] != team:
+                                is_live = True
+                                break
+                        status = "live-wrong" if is_live else "incorrect"
+                elif round_key == "1/2":
+                    if team in results_data.get("1/2", []):
+                        is_live = False
+                        for m in matches_1_2:
+                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] == team:
+                                is_live = True
+                                break
+                        status = "live-correct" if is_live else "correct"
+                    elif team in results_data.get("1/2_losers", []):
+                        is_live = False
+                        for m in matches_1_2:
                             if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] != team:
                                 is_live = True
                                 break
@@ -416,54 +420,99 @@ def get_player_bets(player_name):
 
     return jsonify(formatted_bets)
 
-@app.route('/api/refresh', methods=['POST'])
-def refresh_live_data():
-    """Scrapes live data from scrape_scores, updates only '1/4' in results.json, and returns status."""
-    print("Attempting to refresh live data...")
+@app.route('/api/refresh_quarters', methods=['POST'])
+def refresh_quarters_data():
+    """Scrapes quarter-finals data, updates only '1/2' and '1/2_losers' in results.json, and returns status."""
+    print("Attempting to refresh quarter-finals data...")
     try:
-        matches = scrape_with_requests()
+        matches = scrape_quarters_with_requests()
         if not matches:
             print("Scraping failed, no matches returned.")
             return jsonify({"success": False, "message": "Scraping failed to return any data."}), 500
 
-        winners_1_4 = []
-        losers_1_4 = []
+        winners_1_2 = []
+        losers_1_2 = []
         for m in matches:
             if m["status"] in ("finished", "live") and m["winner"] and m["winner"] != "Draw":
-                winners_1_4.append(m["winner"])
+                winners_1_2.append(m["winner"])
                 # Find the loser
                 loser = m["team1"] if m["winner"] == m["team2"] else m["team2"]
-                losers_1_4.append(loser)
+                losers_1_2.append(loser)
 
-        # Load current results.json to preserve '1/8' and other fields
+        # Load current results.json to preserve earlier rounds and other fields
         if os.path.exists(RESULTS_FILE):
             with open(RESULTS_FILE, 'r', encoding='utf-8') as f:
                 results = json.load(f)
         else:
-            results = {"1/8": [], "1/4": [], "1/4_losers": [], "1/2": [], "Final": [], "Winner": "", "BestStriker": ""}
+            results = {"1/8": [], "1/4": [], "1/4_losers": [], "1/2": [], "1/2_losers": [], "Final": [], "Winner": "", "BestStriker": ""}
 
-        results["1/4"] = sorted(set(winners_1_4))
-        results["1/4_losers"] = sorted(set(losers_1_4))
+        results["1/2"] = sorted(set(winners_1_2))
+        results["1/2_losers"] = sorted(set(losers_1_2))
 
         with open(RESULTS_FILE, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=4, ensure_ascii=False)
 
-        print("Successfully updated '1/4' in results.json.")
-        print(f"[DEBUG] Winners/leading teams for 1/4: {winners_1_4}")
-        return jsonify({"success": True, "message": "Live data refreshed successfully!"})
+        print("Successfully updated '1/2' and '1/2_losers' in results.json.")
+        print(f"[DEBUG] Winners/leading teams for 1/2: {winners_1_2}")
+        return jsonify({"success": True, "message": "Quarter-finals data refreshed successfully!"})
 
     except Exception as e:
-        print(f"An error occurred during the refresh process: {e}")
+        print(f"An error occurred during the quarter-finals refresh process: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/live')
 def get_live_game():
-    """Returns the current live game and score, or None if no game is live."""
-    matches = scrape_with_requests()
-    live_matches = [m for m in matches if m["status"] == "live"]
+    """Returns the current live or next game and score, from all rounds (1/8, 1/4, 1/2)."""
+    matches_1_8_1_4 = scrape_with_requests()
+    matches_1_2 = scrape_quarters_with_requests()
+    all_matches = matches_1_8_1_4 + matches_1_2
+    # Sort by date/time if possible, fallback to order
+    live_matches = [m for m in all_matches if m["status"] == "live"]
     if live_matches:
         return jsonify(live_matches[0])
+    # If no live, show next upcoming
+    upcoming = [m for m in all_matches if m["status"] == "upcoming"]
+    if upcoming:
+        return jsonify(upcoming[0])
     return jsonify(None)
+
+@app.route('/api/refresh_all', methods=['POST'])
+def refresh_all_data():
+    """Refreshes all rounds: 1/4 and 1/2, updating results.json for both."""
+    try:
+        # 1/4 update
+        matches_1_4 = scrape_with_requests()
+        winners_1_4 = []
+        losers_1_4 = []
+        for m in matches_1_4:
+            if m["status"] in ("finished", "live") and m["winner"] and m["winner"] != "Draw":
+                winners_1_4.append(m["winner"])
+                loser = m["team1"] if m["winner"] == m["team2"] else m["team2"]
+                losers_1_4.append(loser)
+        # 1/2 update
+        matches_1_2 = scrape_quarters_with_requests()
+        winners_1_2 = []
+        losers_1_2 = []
+        for m in matches_1_2:
+            if m["status"] in ("finished", "live") and m["winner"] and m["winner"] != "Draw":
+                winners_1_2.append(m["winner"])
+                loser = m["team1"] if m["winner"] == m["team2"] else m["team2"]
+                losers_1_2.append(loser)
+        # Load and update results.json
+        if os.path.exists(RESULTS_FILE):
+            with open(RESULTS_FILE, 'r', encoding='utf-8') as f:
+                results = json.load(f)
+        else:
+            results = {"1/8": [], "1/4": [], "1/4_losers": [], "1/2": [], "1/2_losers": [], "Final": [], "Winner": "", "BestStriker": ""}
+        results["1/4"] = sorted(set(winners_1_4))
+        results["1/4_losers"] = sorted(set(losers_1_4))
+        results["1/2"] = sorted(set(winners_1_2))
+        results["1/2_losers"] = sorted(set(losers_1_2))
+        with open(RESULTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(results, f, indent=4, ensure_ascii=False)
+        return jsonify({"success": True, "message": "All rounds refreshed!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/top_scorers')
 def get_top_scorers():
