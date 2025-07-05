@@ -52,21 +52,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     header.innerHTML = `<span class="live-dot"></span> LIVE NOW`;
                     const formattedScore = formatScore(game.score);
                     content.innerHTML = `
-                        <span>${game.team1}</span>
-                        <span style="font-weight:700; margin: 0 8px;">${formattedScore}</span>
-                        <span>${game.team2}</span>
+                        <div class="live-game-teams">
+                            <span>${game.team1}</span>
+                            <span class="live-game-score">${formattedScore}</span>
+                            <span>${game.team2}</span>
+                        </div>
                     `;
                 } else {
                     // Game has not started yet
                     container.style.display = 'block';
                     header.innerHTML = `Next game`;
                     // Show the time if available, else just show teams
-                    let timeStr = game.time ? `<span style="margin-right:8px;">${game.time}</span>` : '';
+                    let timeStr = '';
+                    if (game.time) {
+                        // Add 1 hour to account for timezone difference
+                        const timeParts = game.time.split(':');
+                        if (timeParts.length === 2) {
+                            let hour = parseInt(timeParts[0]);
+                            const minute = timeParts[1];
+                            hour = (hour + 1) % 24; // Add 1 hour and handle 24-hour format
+                            const adjustedTime = `${hour.toString().padStart(2, '0')}:${minute}`;
+                            timeStr = `<div class="live-game-time">${adjustedTime}</div>`;
+                        } else {
+                            timeStr = `<div class="live-game-time">${game.time}</div>`;
+                        }
+                    }
                     content.innerHTML = `
                         ${timeStr}
-                        <span>${game.team1}</span>
-                        <span style="font-weight:700; margin: 0 8px;">vs</span>
-                        <span>${game.team2}</span>
+                        <div class="live-game-teams">
+                            <span>${game.team1}</span>
+                            <span class="live-game-vs">vs</span>
+                            <span>${game.team2}</span>
+                        </div>
                     `;
                 }
             } else {
@@ -268,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the page with fresh data
     initializePage();
 
-    // 3. Keep live game updated every 30 seconds
+    // Keep live game and top scorers updated every 30 seconds
     setInterval(fetchLiveGame, 30000);
+    setInterval(renderTopScorers, 30000);
 });

@@ -1,11 +1,27 @@
+"""
+CDMC (Coupe du Monde des Clubs) Prediction Web App
+==================================================
+
+A Flask web application for managing Club World Cup predictions, including:
+- Leaderboard with live scoring
+- Joker prediction system for bonus points
+- Live match updates
+- Top scorers tracking
+- Admin dashboard for managing predictions
+
+Main application file that handles all routes and business logic.
+"""
+
 from flask import Flask, jsonify, send_from_directory, render_template, url_for, request, session, redirect
 import csv
 import json
 import os
-from scrape_scores import scrape_with_requests
+from scrape_round_of_16 import scrape_with_requests as scrape_round_of_16_with_requests
 import subprocess
 from functools import wraps
-from scrape_quarters import scrape_with_requests as scrape_quarters_with_requests
+from scrape_quarter_finals import scrape_with_requests as scrape_quarter_finals_with_requests
+from scrape_semi_finals import scrape_with_requests as scrape_semi_finals_with_requests
+import importlib.util
 
 # --- Constants ---
 BETS_FILE = 'bets.csv'
@@ -107,7 +123,19 @@ def compute_score(bet, results):
         actual_teams = {str(team).strip().lower() for team in results.get(round_name, [])}
         bet_teams_str = bet.get(round_name, "")
         bet_teams = {team.strip().lower() for team in bet_teams_str.split(';')} if bet_teams_str else set()
+        
+        # For 1/4 and 1/2, also check if teams actually played in those rounds
+        if round_name == "1/4":
+            all_1_4_teams = {str(team).strip().lower() for team in results.get("1/4", []) + results.get("1/4_losers", [])}
+            # Only count teams that actually played in 1/4 finals
+            bet_teams = bet_teams & all_1_4_teams
+        elif round_name == "1/2":
+            all_1_2_teams = {str(team).strip().lower() for team in results.get("1/2", []) + results.get("1/2_losers", [])}
+            # Only count teams that actually played in 1/2 finals
+            bet_teams = bet_teams & all_1_2_teams
+        
         score += len(bet_teams & actual_teams) * POINTS.get(round_name, 0)
+    
     if bet.get("Winner", "").strip().lower() == results.get("Winner", "").strip().lower():
         score += POINTS["Winner"]
     if bet.get("BestStriker", "").strip().lower() == results.get("BestStriker", "").strip().lower():
@@ -215,9 +243,10 @@ def compute_joker_points(joker_prediction, results):
         
         # Get actual results from the correct scraper based on the teams involved
         # For now, we'll check both scrapers since we don't know which round the match belongs to
-        matches_1_8_1_4 = scrape_with_requests()
-        matches_1_2 = scrape_quarters_with_requests()
-        all_matches = matches_1_8_1_4 + matches_1_2
+        matches_1_8 = scrape_round_of_16_with_requests()
+        matches_1_4 = scrape_quarter_finals_with_requests()
+        matches_1_2 = scrape_semi_finals_with_requests()
+        all_matches = matches_1_8 + matches_1_4 + matches_1_2
         
         for match in all_matches:
             # Check if this match involves the predicted teams
@@ -294,11 +323,13 @@ def get_player_bets(player_name):
 
     formatted_bets = {}
 
-    # Use scrape_scores for 1/8 and 1/4, scrape_quarters for 1/2
-    matches_1_8_1_4 = scrape_with_requests()
-    matches_1_2 = scrape_quarters_with_requests()
+    # Use correct scrapers for each round
+    matches_1_8 = scrape_round_of_16_with_requests()
+    matches_1_4 = scrape_quarter_finals_with_requests()
+    matches_1_2 = scrape_semi_finals_with_requests()
 
     # Validate team-based rounds
+    eliminated_teams = set()
     for round_key in ["1/8", "1/4", "1/2", "Final"]:
         teams = player_bet.get(round_key, "").split(';')
         result_set = results_sets.get(round_key)
@@ -306,36 +337,68 @@ def get_player_bets(player_name):
             formatted_bets[round_key] = []
             for team in teams:
                 status = "pending"
+                # Track elimination for cascading logic
                 if round_key == "1/4":
+                    # 1/4 teams are teams that qualified from Round of 16 → check Round of 16 matches
+                    all_1_4_teams = set(results_data.get("1/4", []) + results_data.get("1/4_losers", []))
                     if team in results_data.get("1/4", []):
                         is_live = False
-                        for m in matches_1_8_1_4:
+                        for m in matches_1_8:  # Round of 16 matches
                             if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] == team:
                                 is_live = True
                                 break
                         status = "live-correct" if is_live else "correct"
                     elif team in results_data.get("1/4_losers", []):
                         is_live = False
-                        for m in matches_1_8_1_4:
+                        for m in matches_1_8:  # Round of 16 matches
                             if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] != team:
                                 is_live = True
                                 break
                         status = "live-wrong" if is_live else "incorrect"
+                        eliminated_teams.add(team)
+                    elif team not in all_1_4_teams:
+                        status = "incorrect"
+                        eliminated_teams.add(team)
+                    else:
+                        status = "pending"
                 elif round_key == "1/2":
+                    # 1/2 teams are teams that qualified from Quarter Finals → check Quarter Finals matches
+                    all_1_2_teams = set(results_data.get("1/2", []) + results_data.get("1/2_losers", []))
                     if team in results_data.get("1/2", []):
                         is_live = False
-                        for m in matches_1_2:
+                        for m in matches_1_4:  # Quarter Finals matches
                             if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] == team:
                                 is_live = True
                                 break
                         status = "live-correct" if is_live else "correct"
                     elif team in results_data.get("1/2_losers", []):
                         is_live = False
-                        for m in matches_1_2:
+                        for m in matches_1_4:  # Quarter Finals matches
                             if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] != team:
                                 is_live = True
                                 break
                         status = "live-wrong" if is_live else "incorrect"
+                        eliminated_teams.add(team)
+                    elif team not in all_1_2_teams:
+                        status = "incorrect"
+                        eliminated_teams.add(team)
+                    else:
+                        status = "pending"
+                elif round_key == "Final":
+                    # Final teams are teams that qualified from Semi-Finals → check Semi-Finals matches
+                    if team in eliminated_teams:
+                        status = "incorrect"
+                    else:
+                        # Check if team is in Semi-Finals matches
+                        is_live = False
+                        for m in matches_1_2:  # Semi-Finals matches
+                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live":
+                                is_live = True
+                                break
+                        if is_live:
+                            status = "live-pending"
+                        else:
+                            status = check_bet_status(team, result_set)
                 else:
                     status = check_bet_status(team, result_set)
                 formatted_bets[round_key].append({"team": team, "status": status})
@@ -347,7 +410,10 @@ def get_player_bets(player_name):
     winner_result = results_data.get("Winner", "")
     if winner_bet:
         status = "pending"
-        if winner_result:
+        # If winner team is already eliminated in previous rounds, mark as incorrect
+        if winner_bet in eliminated_teams:
+            status = "incorrect"
+        elif winner_result:
             status = "correct" if winner_bet == winner_result else "incorrect"
         formatted_bets["Winner"] = {"team": winner_bet, "status": status}
     else:
@@ -428,10 +494,10 @@ def get_player_bets(player_name):
 
 @app.route('/api/refresh_quarters', methods=['POST'])
 def refresh_quarters_data():
-    """Scrapes quarter-finals data, updates only '1/2' and '1/2_losers' in results.json, and returns status."""
-    print("Attempting to refresh quarter-finals data...")
+    """Scrapes semi-finals data, updates only '1/2' and '1/2_losers' in results.json, and returns status."""
+    print("Attempting to refresh semi-finals data...")
     try:
-        matches = scrape_quarters_with_requests()
+        matches = scrape_semi_finals_with_requests()
         if not matches:
             print("Scraping failed, no matches returned.")
             return jsonify({"success": False, "message": "Scraping failed to return any data."}), 500
@@ -460,18 +526,19 @@ def refresh_quarters_data():
 
         print("Successfully updated '1/2' and '1/2_losers' in results.json.")
         print(f"[DEBUG] Winners/leading teams for 1/2: {winners_1_2}")
-        return jsonify({"success": True, "message": "Quarter-finals data refreshed successfully!"})
+        return jsonify({"success": True, "message": "Semi-finals data refreshed successfully!"})
 
     except Exception as e:
-        print(f"An error occurred during the quarter-finals refresh process: {e}")
+        print(f"An error occurred during the semi-finals refresh process: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/live')
 def get_live_game():
     """Returns the current live or next game and score, from all rounds (1/8, 1/4, 1/2)."""
-    matches_1_8_1_4 = scrape_with_requests()
-    matches_1_2 = scrape_quarters_with_requests()
-    all_matches = matches_1_8_1_4 + matches_1_2
+    matches_1_8 = scrape_round_of_16_with_requests()
+    matches_1_4 = scrape_quarter_finals_with_requests()
+    matches_1_2 = scrape_semi_finals_with_requests()
+    all_matches = matches_1_8 + matches_1_4 + matches_1_2
     # Sort by date/time if possible, fallback to order
     live_matches = [m for m in all_matches if m["status"] == "live"]
     if live_matches:
@@ -482,12 +549,33 @@ def get_live_game():
         return jsonify(upcoming[0])
     return jsonify(None)
 
+def scrape_final_with_requests():
+    spec = importlib.util.spec_from_file_location("scrape_final", "scrape_final.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.scrape_final()
+
 @app.route('/api/refresh_all', methods=['POST'])
 def refresh_all_data():
-    """Refreshes all rounds: 1/4 and 1/2, updating results.json for both."""
+    """Refreshes all rounds: 1/8, 1/4, 1/2, and final, updating results.json for all."""
     try:
-        # 1/4 update
-        matches_1_4 = scrape_with_requests()
+        # Round of 16 scraper returns teams that qualified for Quarter Finals
+        matches_1_8 = scrape_round_of_16_with_requests()
+        winners_1_8 = []
+        losers_1_8 = []
+        teams_1_8 = set()
+        for m in matches_1_8:
+            if m["team1"]:
+                teams_1_8.add(m["team1"])
+            if m["team2"]:
+                teams_1_8.add(m["team2"])
+            if m["status"] in ("finished", "live") and m["winner"] and m["winner"] != "Draw":
+                winners_1_8.append(m["winner"])
+                loser = m["team1"] if m["winner"] == m["team2"] else m["team2"]
+                losers_1_8.append(loser)
+        
+        # Quarter Finals scraper returns teams that qualified for Semi-Finals
+        matches_1_4 = scrape_quarter_finals_with_requests()
         winners_1_4 = []
         losers_1_4 = []
         for m in matches_1_4:
@@ -495,8 +583,9 @@ def refresh_all_data():
                 winners_1_4.append(m["winner"])
                 loser = m["team1"] if m["winner"] == m["team2"] else m["team2"]
                 losers_1_4.append(loser)
-        # 1/2 update
-        matches_1_2 = scrape_quarters_with_requests()
+        
+        # Semi-Finals scraper returns teams that qualified for Final
+        matches_1_2 = scrape_semi_finals_with_requests()
         winners_1_2 = []
         losers_1_2 = []
         for m in matches_1_2:
@@ -504,18 +593,47 @@ def refresh_all_data():
                 winners_1_2.append(m["winner"])
                 loser = m["team1"] if m["winner"] == m["team2"] else m["team2"]
                 losers_1_2.append(loser)
+        
+        # Final scraper
+        matches_final = scrape_final_with_requests()
+        final_teams = []
+        final_winner = ""
+        for m in matches_final:
+            if m["team1"] and m["team2"]:
+                final_teams = [m["team1"], m["team2"]]
+            if m["status"] == "finished" and m["winner"] and m["winner"] != "Draw":
+                final_winner = m["winner"]
+        
         # Load and update results.json
         if os.path.exists(RESULTS_FILE):
             with open(RESULTS_FILE, 'r', encoding='utf-8') as f:
                 results = json.load(f)
         else:
-            results = {"1/8": [], "1/4": [], "1/4_losers": [], "1/2": [], "1/2_losers": [], "Final": [], "Winner": "", "BestStriker": ""}
-        results["1/4"] = sorted(set(winners_1_4))
-        results["1/4_losers"] = sorted(set(losers_1_4))
-        results["1/2"] = sorted(set(winners_1_2))
-        results["1/2_losers"] = sorted(set(losers_1_2))
+            results = {"1/8": [], "1/8_losers": [], "1/4": [], "1/4_losers": [], "1/2": [], "1/2_losers": [], "Final": [], "Winner": "", "BestStriker": ""}
+        
+        # Set 1/8 to all unique teams that played in round of 16
+        results["1/8"] = sorted(teams_1_8)
+        
+        # Round of 16 winners (teams qualified for Quarter Finals) → "1/4"
+        results["1/4"] = sorted(set(winners_1_8))
+        results["1/4_losers"] = sorted(set(losers_1_8))
+        
+        # Quarter Finals winners (teams qualified for Semi-Finals) → "1/2"
+        results["1/2"] = sorted(set(winners_1_4))
+        results["1/2_losers"] = sorted(set(losers_1_4))
+        
+        # Semi-Finals winners (teams qualified for Final) → "Final"
+        results["Final"] = sorted(set(winners_1_2))
+        
+        # Final teams and winner
+        if final_teams:
+            results["Final"] = final_teams
+        if final_winner:
+            results["Winner"] = final_winner
+        
         with open(RESULTS_FILE, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=4, ensure_ascii=False)
+        
         return jsonify({"success": True, "message": "All rounds refreshed!"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -545,13 +663,13 @@ def refresh_top_scorers():
     try:
         print("Attempting to refresh top scorers...")
         
-        # Check if temp.py exists
-        if not os.path.exists('temp.py'):
-            print("Error: temp.py not found")
-            return jsonify({"success": False, "message": "temp.py not found"}), 500
+        # Check if scrape_top_scorers.py exists
+        if not os.path.exists('scrape_top_scorers.py'):
+            print("Error: scrape_top_scorers.py not found")
+            return jsonify({"success": False, "message": "scrape_top_scorers.py not found"}), 500
         
         # Try to run the script
-        result = subprocess.run(['python3', 'temp.py'], 
+        result = subprocess.run(['python3', 'scrape_top_scorers.py'], 
                               capture_output=True, 
                               text=True, 
                               check=True)

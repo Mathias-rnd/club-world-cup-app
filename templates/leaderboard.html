@@ -428,12 +428,44 @@
             color: var(--dark-blue);
             font-weight: 600;
             letter-spacing: 0.5px;
-            margin-top: 2px;
-            margin-bottom: 2px;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .live-game-teams {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .live-game-vs {
+            font-weight: 700;
+            color: var(--gold-color);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .live-game-score {
+            font-weight: 700;
+            color: var(--dark-blue);
+            font-size: 1.3em;
+            margin: 0 12px;
+        }
+        
+        .live-game-time {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 4px;
         }
 
         @media (max-width: 800px) {

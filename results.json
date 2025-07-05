@@ -1,21 +1,21 @@
 {
     "1/8": [
-        "Palmeiras",
-        "Botafogo - RJ",
-        "SL Benfica",
-        "Chelsea FC",
-        "Paris Saint-Germain",
-        "Inter Miami CF",
-        "Flamengo RJ",
-        "Bayern München",
-        "Inter",
-        "Fluminense RJ",
-        "Manchester City",
         "Al Hilal",
-        "Real Madrid",
-        "Juventus",
+        "Bayern München",
         "Borussia Dortmund",
-        "CF Monterrey"
+        "Botafogo - RJ",
+        "CF Monterrey",
+        "Chelsea FC",
+        "Flamengo RJ",
+        "Fluminense RJ",
+        "Inter",
+        "Inter Miami CF",
+        "Juventus",
+        "Manchester City",
+        "Palmeiras",
+        "Paris Saint-Germain",
+        "Real Madrid",
+        "SL Benfica"
     ],
     "1/4": [
         "Al Hilal",
@@ -40,14 +40,29 @@
     "1/2": [
         "Chelsea FC",
         "Fluminense RJ",
-        "Paris Saint-Germain"
+        "Paris Saint-Germain",
+        "Real Madrid"
     ],
-    "Final": [],
+    "Final": [
+        "N.N.",
+        "N.N."
+    ],
     "Winner": "",
     "BestStriker": "",
     "1/2_losers": [
         "Al Hilal",
         "Bayern München",
+        "Borussia Dortmund",
         "Palmeiras"
+    ],
+    "1/8_losers": [
+        "Botafogo - RJ",
+        "CF Monterrey",
+        "Flamengo RJ",
+        "Inter",
+        "Inter Miami CF",
+        "Juventus",
+        "Manchester City",
+        "SL Benfica"
     ]
 }

@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-URL = "https://www.worldfootball.net/schedule/klub-wm-2025-viertelfinale/0/"
+URL = "https://www.worldfootball.net/schedule/klub-wm-2025-achtelfinale/0/"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 def clean(cell):
@@ -90,10 +90,10 @@ def display(matches):
 if __name__ == "__main__":
     matches = fetch_matches()
     display(matches)
-
+    
 def scrape_with_requests(*args, **kwargs):
     matches = fetch_matches()
     print(f"[DEBUG] scrape_with_requests fetched {len(matches)} matches.")
     for m in matches:
         print(f"[DEBUG] {m['status'].upper()}: {m['team1']} vs {m['team2']} | Winner: {m['winner']}")
-    return matches 
+    return matches
