@@ -1,5 +1,48 @@
 // script.js
 
+// Team logos mapping - using ESPN CDN sources only
+const TEAM_LOGOS = {
+    'Al Hilal': 'https://a.espncdn.com/i/teamlogos/soccer/500/929.png',
+    'América': 'https://a.espncdn.com/i/teamlogos/soccer/500/227.png',
+    'Bayern München': 'https://a.espncdn.com/i/teamlogos/soccer/500/132.png',
+    'SL Benfica': 'https://a.espncdn.com/i/teamlogos/soccer/500/1929.png',
+    'Borussia Dortmund': 'https://a.espncdn.com/i/teamlogos/soccer/500/124.png',
+    'Botafogo - RJ': 'https://a.espncdn.com/i/teamlogos/soccer/500/6086.png',
+    'Chelsea FC': 'https://a.espncdn.com/i/teamlogos/soccer/500/363.png',
+    'FC Porto': 'https://a.espncdn.com/i/teamlogos/soccer/500/437.png',
+    'Flamengo RJ': 'https://a.espncdn.com/i/teamlogos/soccer/500/819.png',
+    'Fluminense': 'https://a.espncdn.com/i/teamlogos/soccer/500/3445.png',
+    'Fluminense RJ': 'https://a.espncdn.com/i/teamlogos/soccer/500/3445.png',
+    'Inter Miami CF': 'https://a.espncdn.com/i/teamlogos/soccer/500/20232.png',
+    'Inter': 'https://a.espncdn.com/i/teamlogos/soccer/500/110.png',
+    'Juventus': 'https://a.espncdn.com/i/teamlogos/soccer/500/111.png',
+    'Manchester City': 'https://a.espncdn.com/i/teamlogos/soccer/500/382.png',
+    'CF Monterrey': 'https://a.espncdn.com/i/teamlogos/soccer/500/220.png',
+    'Palmeiras': 'https://a.espncdn.com/i/teamlogos/soccer/500/2029.png',
+    'Paris Saint-Germain': 'https://a.espncdn.com/i/teamlogos/soccer/500/160.png',
+    'Real Madrid': 'https://a.espncdn.com/i/teamlogos/soccer/500/86.png',
+    'River Plate': 'https://a.espncdn.com/i/teamlogos/soccer/500/16.png',
+    'Boca Juniors': 'https://a.espncdn.com/i/teamlogos/soccer/500/5.png',
+    'Salzburg': 'https://a.espncdn.com/i/teamlogos/soccer/500/2790.png',
+    'Atletico Madrid': 'https://a.espncdn.com/i/teamlogos/soccer/500/1068.png',
+    'Los Angeles FC': 'https://a.espncdn.com/i/teamlogos/soccer/500/18966.png',
+};
+
+function getTeamLogo(teamName) {
+    return TEAM_LOGOS[teamName] || null;
+}
+
+function createTeamDisplay(teamName) {
+    const logo = getTeamLogo(teamName);
+    if (logo) {
+        return `<div class="team-with-logo">
+                    <img src="${logo}" alt="${teamName}" class="team-logo" onerror="this.style.display='none'">
+                    <span>${teamName}</span>
+                </div>`;
+    }
+    return `<span>${teamName}</span>`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const listEl = document.getElementById('leaderboard-list');
     const detailsPanel = document.getElementById('details-panel');
@@ -53,15 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const formattedScore = formatScore(game.score);
                     content.innerHTML = `
                         <div class="live-game-teams">
-                            <span>${game.team1}</span>
+                            ${createTeamDisplay(game.team1)}
                             <span class="live-game-score">${formattedScore}</span>
-                            <span>${game.team2}</span>
+                            ${createTeamDisplay(game.team2)}
                         </div>
                     `;
                 } else {
                     // Game has not started yet
                     container.style.display = 'block';
-                    header.innerHTML = `Next game`;
+                    header.innerHTML = game.date ? `Next game – ${game.date}` : `Next game`;
                     // Show the time if available, else just show teams
                     let timeStr = '';
                     if (game.time) {
@@ -80,9 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     content.innerHTML = `
                         ${timeStr}
                         <div class="live-game-teams">
-                            <span>${game.team1}</span>
+                            ${createTeamDisplay(game.team1)}
                             <span class="live-game-vs">vs</span>
-                            <span>${game.team2}</span>
+                            ${createTeamDisplay(game.team2)}
                         </div>
                     `;
                 }
@@ -126,67 +169,109 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBetDetails(playerName, bets) {
         detailsPlayerName.textContent = `${playerName}'s Bets`;
 
-        const createList = (betArray) => {
-            if (!betArray || betArray.length === 0) return '';
-            return `<ul>${betArray.map(bet => `<li class="status-${bet.status}">${bet.team}</li>`).join('')}</ul>`;
-        };
-
-        const createPara = (bet, isBar = false) => {
-            if (!bet || !bet.team) return '';
-            if (isBar && (bet.status === "correct" || bet.status === "incorrect")) {
-                return `<div class="status-${bet.status}-bar">${bet.team}</div>`;
+        // Helper function to create team display with logo
+        function createTeamDisplay(teamName) {
+            const logo = getTeamLogo(teamName);
+            if (logo) {
+                return `<div class="team-with-logo">
+                            <img src="${logo}" alt="${teamName}" class="team-logo" onerror="this.style.display='none'">
+                            <span>${teamName}</span>
+                        </div>`;
             }
-            return `<p class="status-${bet.status}">${bet.team}</p>`;
-        };
+            return `<span>${teamName}</span>`;
+        }
 
-        const createJokerList = (jokers, roundName) => {
+        // Helper function to create a list of bets
+        function createBetList(betArray, title) {
+            if (!betArray || betArray.length === 0) return '';
+            const items = betArray.map(bet => {
+                const teamDisplay = createTeamDisplay(bet.team);
+                // Ensure status is valid, fallback to pending if not
+                const status = bet.status && ['pending', 'correct', 'incorrect', 'partial', 'live-correct', 'live-wrong', 'live-pending'].includes(bet.status) 
+                    ? bet.status 
+                    : 'pending';
+                return `<li class="status-${status}">${teamDisplay}</li>`;
+            }).join('');
+            return `<div class="bet-section">
+                        <h3>${title}</h3>
+                        <ul>${items}</ul>
+                    </div>`;
+        }
+
+        // Helper function to create single bet display
+        function createSingleBet(bet, title) {
+            if (!bet || !bet.team) return '';
+            const teamDisplay = createTeamDisplay(bet.team);
+            // Ensure status is valid, fallback to pending if not
+            const status = bet.status && ['pending', 'correct', 'incorrect', 'partial', 'live-correct', 'live-wrong', 'live-pending'].includes(bet.status) 
+                ? bet.status 
+                : 'pending';
+            return `<div class="bet-section">
+                        <h3>${title}</h3>
+                        <ul><li class="status-${status}">${teamDisplay}</li></ul>
+                    </div>`;
+        }
+
+        // Helper function to create joker section
+        function createJokerSection(jokers, title) {
             if (!jokers || jokers.length === 0) return '';
             
-            // Filter out null/empty jokers and create items
             const jokerItems = jokers
                 .map((joker, index) => {
                     if (!joker || !joker.team || !joker.team.trim()) return null;
                     const pointsText = joker.points !== undefined ? ` (${joker.points > 0 ? '+' : ''}${joker.points} pts)` : '';
-                    return `<li class="status-${joker.status}">Joker ${index + 1}: ${joker.team}${pointsText}</li>`;
+                    // Ensure status is valid, fallback to pending if not
+                    const status = joker.status && ['pending', 'correct', 'incorrect', 'partial', 'live-correct', 'live-wrong', 'live-pending'].includes(joker.status) 
+                        ? joker.status 
+                        : 'pending';
+                    return `<li class="status-${status}">Joker ${index + 1}: ${joker.team}${pointsText}</li>`;
                 })
                 .filter(item => item !== null);
             
             if (jokerItems.length === 0) return '';
-            return `<div class="details-section"><h3>${roundName} Jokers</h3><ul>${jokerItems.join('')}</ul></div>`;
-        };
-
-        const sections = {
-            '1/8 Final': createList(bets['1/8']),
-            '1/4 Final': createList(bets['1/4']),
-            '1/2 Final': createList(bets['1/2']),
-            'Final': createList(bets['Final']),
-            'Winner': createPara(bets.Winner),
-            'Best Striker': createPara(bets.BestStriker, true)
-        };
-
-        const createSection = (title) => sections[title] ? `<div class="details-section"><h3>${title}</h3>${sections[title]}</div>` : '';
-
-        // Create joker sections
-        const jokerSections = [];
-        if (bets.Jokers) {
-            // Only add joker sections if they have actual jokers
-            if (bets.Jokers['1/8'] && bets.Jokers['1/8'].some(joker => joker && joker.team && joker.team.trim())) {
-                jokerSections.push(createJokerList(bets.Jokers['1/8'], 'Round of 16'));
-            }
-            if (bets.Jokers['1/4'] && bets.Jokers['1/4'].some(joker => joker && joker.team && joker.team.trim())) {
-                jokerSections.push(createJokerList(bets.Jokers['1/4'], 'Quarter Finals'));
-            }
-            if (bets.Jokers['1/2'] && bets.Jokers['1/2'].some(joker => joker && joker.team && joker.team.trim())) {
-                jokerSections.push(createJokerList(bets.Jokers['1/2'], 'Semi-Finals'));
-            }
+            return `<div class="bet-section">
+                        <h3>${title} Jokers</h3>
+                        <ul>${jokerItems.join('')}</ul>
+                    </div>`;
         }
 
-        const column1 = `<div class="details-column">${createSection('1/8 Final')}</div>`;
-        const column2 = `<div class="details-column">${createSection('1/4 Final')}</div>`;
-        const column3 = `<div class="details-column">${createSection('1/2 Final')}</div>`;
-        const column4 = `<div class="details-column">${createSection('Final')}${createSection('Winner')}${createSection('Best Striker')}${jokerSections.join('')}</div>`;
+        // Build the content with horizontal layout
+        let content = '<div class="bet-details-grid">';
+        
+        // Column 1: Round of 16
+        content += '<div class="bet-column">';
+        content += createBetList(bets['1/8'], 'Round of 16');
+        if (bets.Jokers && bets.Jokers['1/8']) {
+            content += createJokerSection(bets.Jokers['1/8'], 'Round of 16');
+        }
+        content += '</div>';
+        
+        // Column 2: Quarter Finals
+        content += '<div class="bet-column">';
+        content += createBetList(bets['1/4'], 'Quarter Finals');
+        if (bets.Jokers && bets.Jokers['1/4']) {
+            content += createJokerSection(bets.Jokers['1/4'], 'Quarter Finals');
+        }
+        content += '</div>';
+        
+        // Column 3: Semi Finals
+        content += '<div class="bet-column">';
+        content += createBetList(bets['1/2'], 'Semi Finals');
+        if (bets.Jokers && bets.Jokers['1/2']) {
+            content += createJokerSection(bets.Jokers['1/2'], 'Semi Finals');
+        }
+        content += '</div>';
+        
+        // Column 4: Final, Winner, Best Striker
+        content += '<div class="bet-column">';
+        content += createBetList(bets['Final'], 'Final');
+        content += createSingleBet(bets.Winner, 'Winner');
+        content += createSingleBet(bets.BestStriker, 'Best Striker');
+        content += '</div>';
+        
+        content += '</div>';
 
-        detailsContent.innerHTML = column1 + column2 + column3 + column4;
+        detailsContent.innerHTML = content;
         detailsPanel.classList.add('visible');
         document.querySelector('.container').classList.add('details-open');
     }

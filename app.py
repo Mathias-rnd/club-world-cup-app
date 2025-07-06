@@ -323,12 +323,6 @@ def get_player_bets(player_name):
 
     formatted_bets = {}
 
-    # Use correct scrapers for each round
-    matches_1_8 = scrape_round_of_16_with_requests()
-    matches_1_4 = scrape_quarter_finals_with_requests()
-    matches_1_2 = scrape_semi_finals_with_requests()
-
-    # Validate team-based rounds
     eliminated_teams = set()
     for round_key in ["1/8", "1/4", "1/2", "Final"]:
         teams = player_bet.get(round_key, "").split(';')
@@ -337,24 +331,12 @@ def get_player_bets(player_name):
             formatted_bets[round_key] = []
             for team in teams:
                 status = "pending"
-                # Track elimination for cascading logic
                 if round_key == "1/4":
-                    # 1/4 teams are teams that qualified from Round of 16 → check Round of 16 matches
                     all_1_4_teams = set(results_data.get("1/4", []) + results_data.get("1/4_losers", []))
                     if team in results_data.get("1/4", []):
-                        is_live = False
-                        for m in matches_1_8:  # Round of 16 matches
-                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] == team:
-                                is_live = True
-                                break
-                        status = "live-correct" if is_live else "correct"
+                        status = "correct"
                     elif team in results_data.get("1/4_losers", []):
-                        is_live = False
-                        for m in matches_1_8:  # Round of 16 matches
-                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] != team:
-                                is_live = True
-                                break
-                        status = "live-wrong" if is_live else "incorrect"
+                        status = "incorrect"
                         eliminated_teams.add(team)
                     elif team not in all_1_4_teams:
                         status = "incorrect"
@@ -362,22 +344,11 @@ def get_player_bets(player_name):
                     else:
                         status = "pending"
                 elif round_key == "1/2":
-                    # 1/2 teams are teams that qualified from Quarter Finals → check Quarter Finals matches
                     all_1_2_teams = set(results_data.get("1/2", []) + results_data.get("1/2_losers", []))
                     if team in results_data.get("1/2", []):
-                        is_live = False
-                        for m in matches_1_4:  # Quarter Finals matches
-                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] == team:
-                                is_live = True
-                                break
-                        status = "live-correct" if is_live else "correct"
+                        status = "correct"
                     elif team in results_data.get("1/2_losers", []):
-                        is_live = False
-                        for m in matches_1_4:  # Quarter Finals matches
-                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live" and m["winner"] != team:
-                                is_live = True
-                                break
-                        status = "live-wrong" if is_live else "incorrect"
+                        status = "incorrect"
                         eliminated_teams.add(team)
                     elif team not in all_1_2_teams:
                         status = "incorrect"
@@ -385,20 +356,21 @@ def get_player_bets(player_name):
                     else:
                         status = "pending"
                 elif round_key == "Final":
-                    # Final teams are teams that qualified from Semi-Finals → check Semi-Finals matches
                     if team in eliminated_teams:
                         status = "incorrect"
                     else:
-                        # Check if team is in Semi-Finals matches
-                        is_live = False
-                        for m in matches_1_2:  # Semi-Finals matches
-                            if (team == m["team1"] or team == m["team2"]) and m["status"] == "live":
-                                is_live = True
-                                break
-                        if is_live:
-                            status = "live-pending"
+                        # If the final hasn't been played yet, mark as pending
+                        final_teams = results_data.get("Final", [])
+                        winner = results_data.get("Winner", "")
+                        # Check for placeholders or empty final
+                        final_not_played = not winner or any(t in ["N.N.", "", None] for t in final_teams)
+                        if final_not_played:
+                            status = "pending"
                         else:
-                            status = check_bet_status(team, result_set)
+                            if team in final_teams:
+                                status = "correct"
+                            else:
+                                status = "incorrect"
                 else:
                     status = check_bet_status(team, result_set)
                 formatted_bets[round_key].append({"team": team, "status": status})
@@ -410,7 +382,6 @@ def get_player_bets(player_name):
     winner_result = results_data.get("Winner", "")
     if winner_bet:
         status = "pending"
-        # If winner team is already eliminated in previous rounds, mark as incorrect
         if winner_bet in eliminated_teams:
             status = "incorrect"
         elif winner_result:
@@ -432,8 +403,6 @@ def get_player_bets(player_name):
 
     # Joker predictions for all rounds
     formatted_bets["Jokers"] = {}
-    
-    # Round of 16 jokers (3 jokers)
     jokers_1_8 = []
     for i in range(1, 4):
         joker_key = f"Joker_1_8_{i}"
@@ -452,8 +421,6 @@ def get_player_bets(player_name):
         else:
             jokers_1_8.append(None)
     formatted_bets["Jokers"]["1/8"] = jokers_1_8
-    
-    # Quarter finals jokers (2 jokers)
     jokers_1_4 = []
     for i in range(1, 3):
         joker_key = f"Joker_1_4_{i}"
@@ -472,8 +439,6 @@ def get_player_bets(player_name):
         else:
             jokers_1_4.append(None)
     formatted_bets["Jokers"]["1/4"] = jokers_1_4
-    
-    # Semi-finals jokers (1 joker)
     joker_key = "Joker_1_2_1"
     joker_bet = player_bet.get(joker_key, "")
     if joker_bet and joker_bet.strip():
