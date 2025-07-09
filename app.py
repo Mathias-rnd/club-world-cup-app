@@ -331,65 +331,71 @@ def get_player_bets(player_name):
             formatted_bets[round_key] = []
             for team in teams:
                 status = "pending"
+                # Use team_names_match for all comparisons
+                def in_list(t, lst):
+                    return any(team_names_match(t, x) for x in lst)
                 if round_key == "1/4":
-                    all_1_4_teams = set(results_data.get("1/4", []) + results_data.get("1/4_losers", []))
-                    if team in results_data.get("1/4", []):
+                    all_1_4_teams = results_data.get("1/4", []) + results_data.get("1/4_losers", [])
+                    if in_list(team, results_data.get("1/4", [])):
                         status = "correct"
-                    elif team in results_data.get("1/4_losers", []):
+                    elif in_list(team, results_data.get("1/4_losers", [])):
                         status = "incorrect"
                         eliminated_teams.add(team)
-                    elif team not in all_1_4_teams:
+                    elif not in_list(team, all_1_4_teams):
                         status = "incorrect"
                         eliminated_teams.add(team)
                     else:
                         status = "pending"
                 elif round_key == "1/2":
-                    all_1_2_teams = set(results_data.get("1/2", []) + results_data.get("1/2_losers", []))
-                    if team in results_data.get("1/2", []):
+                    all_1_2_teams = results_data.get("1/2", []) + results_data.get("1/2_losers", [])
+                    if in_list(team, results_data.get("1/2", [])):
                         status = "correct"
-                    elif team in results_data.get("1/2_losers", []):
+                    elif in_list(team, results_data.get("1/2_losers", [])):
                         status = "incorrect"
                         eliminated_teams.add(team)
-                    elif team not in all_1_2_teams:
+                    elif not in_list(team, all_1_2_teams):
                         status = "incorrect"
                         eliminated_teams.add(team)
                     else:
                         status = "pending"
                 elif round_key == "Final":
-                    if team in eliminated_teams:
+                    if in_list(team, eliminated_teams):
                         status = "incorrect"
                     else:
                         final_teams = results_data.get("Final", [])
                         winner = results_data.get("Winner", "")
                         final_not_played = not winner or any(t in ["N.N.", "", None] for t in final_teams)
                         if final_not_played:
-                            # Check live semi-finals for this team
-                            from scrape_semi_finals import scrape_with_requests as scrape_semi_finals_with_requests
-                            matches_1_2 = scrape_semi_finals_with_requests()
-                            is_live_correct = False
-                            is_live_wrong = False
-                            for m in matches_1_2:
-                                if (team == m["team1"] or team == m["team2"]) and m["status"] == "live":
-                                    # Determine if this team is currently winning
-                                    score = m.get("score", "")
-                                    if score and (":" in score or "-" in score):
-                                        score_clean = score.replace("-", ":")
-                                        parts = score_clean.split(":")
-                                        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
-                                            s1, s2 = int(parts[0]), int(parts[1])
-                                            if (team == m["team1"] and s1 > s2) or (team == m["team2"] and s2 > s1):
-                                                is_live_correct = True
-                                            elif (team == m["team1"] and s1 < s2) or (team == m["team2"] and s2 < s1):
-                                                is_live_wrong = True
-                                    break
-                            if is_live_correct:
-                                status = "live-correct"
-                            elif is_live_wrong:
-                                status = "live-wrong"
+                            # Show correct (green) for correct finalists, pending for others
+                            if in_list(team, final_teams):
+                                status = "correct"
                             else:
-                                status = "pending"
+                                # Check live semi-finals for this team
+                                from scrape_semi_finals import scrape_with_requests as scrape_semi_finals_with_requests
+                                matches_1_2 = scrape_semi_finals_with_requests()
+                                is_live_correct = False
+                                is_live_wrong = False
+                                for m in matches_1_2:
+                                    if (team_names_match(team, m["team1"]) or team_names_match(team, m["team2"])) and m["status"] == "live":
+                                        score = m.get("score", "")
+                                        if score and (":" in score or "-" in score):
+                                            score_clean = score.replace("-", ":")
+                                            parts = score_clean.split(":")
+                                            if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                                                s1, s2 = int(parts[0]), int(parts[1])
+                                                if (team_names_match(team, m["team1"]) and s1 > s2) or (team_names_match(team, m["team2"]) and s2 > s1):
+                                                    is_live_correct = True
+                                                elif (team_names_match(team, m["team1"]) and s1 < s2) or (team_names_match(team, m["team2"]) and s2 < s1):
+                                                    is_live_wrong = True
+                                        break
+                                if is_live_correct:
+                                    status = "live-correct"
+                                elif is_live_wrong:
+                                    status = "live-wrong"
+                                else:
+                                    status = "pending"
                         else:
-                            if team in final_teams:
+                            if in_list(team, final_teams):
                                 status = "correct"
                             else:
                                 status = "incorrect"
@@ -402,12 +408,22 @@ def get_player_bets(player_name):
     # Validate Winner
     winner_bet = player_bet.get("Winner", "")
     winner_result = results_data.get("Winner", "")
+    final_teams = results_data.get("Final", [])
     if winner_bet:
         status = "pending"
-        if winner_bet in eliminated_teams:
+        if in_list(winner_bet, eliminated_teams):
             status = "incorrect"
-        elif winner_result:
-            status = "correct" if winner_bet == winner_result else "incorrect"
+        elif not winner_result or winner_result in ["N.N.", "", None]:
+            # Final not played yet
+            if in_list(winner_bet, final_teams):
+                status = "pending"
+            else:
+                status = "incorrect"
+        else:
+            if team_names_match(winner_bet, winner_result):
+                status = "correct"
+            else:
+                status = "incorrect"
         formatted_bets["Winner"] = {"team": winner_bet, "status": status}
     else:
         formatted_bets["Winner"] = None
@@ -521,11 +537,12 @@ def refresh_quarters_data():
 
 @app.route('/api/live')
 def get_live_game():
-    """Returns the current live or next game and score, from all rounds (1/8, 1/4, 1/2)."""
+    """Returns the current live or next game and score, from all rounds (1/8, 1/4, 1/2, Final)."""
     matches_1_8 = scrape_round_of_16_with_requests()
     matches_1_4 = scrape_quarter_finals_with_requests()
     matches_1_2 = scrape_semi_finals_with_requests()
-    all_matches = matches_1_8 + matches_1_4 + matches_1_2
+    matches_final = scrape_final_with_requests()
+    all_matches = matches_1_8 + matches_1_4 + matches_1_2 + matches_final
     # Sort by date/time if possible, fallback to order
     live_matches = [m for m in all_matches if m["status"] == "live"]
     if live_matches:
