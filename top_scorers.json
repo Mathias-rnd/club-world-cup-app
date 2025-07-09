@@ -61,6 +61,16 @@
   },
   {
     "Rank": "7",
+    "Player": "Fabián Ruiz",
+    "Country": "Spain",
+    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/48.gif",
+    "Team": "Paris Saint-Germain",
+    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/563.gif?fallback=png",
+    "Goals": "3",
+    "Penalties": "0"
+  },
+  {
+    "Rank": "8",
     "Player": "Phil Foden",
     "Country": "England",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/12.gif",
@@ -70,7 +80,7 @@
     "Penalties": "0"
   },
   {
-    "Rank": "8",
+    "Rank": "9",
     "Player": "Erling Haaland",
     "Country": "Norway",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/36.gif",
@@ -80,7 +90,7 @@
     "Penalties": "1"
   },
   {
-    "Rank": "9",
+    "Rank": "10",
     "Player": "Harry Kane",
     "Country": "England",
     "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/12.gif",
@@ -88,15 +98,5 @@
     "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/222.gif?fallback=png",
     "Goals": "3",
     "Penalties": "0"
-  },
-  {
-    "Rank": "10",
-    "Player": "Jamal Musiala",
-    "Country": "Germany",
-    "CountryFlagURL": "https://s.hs-data.com/bilder/flaggen_neu/11.gif",
-    "Team": "Bayern München",
-    "TeamLogoURL": "https://s.hs-data.com/bilder/wappen/mini/222.gif?fallback=png",
-    "Goals": "3",
-    "Penalties": "1"
   }
 ]
