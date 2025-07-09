@@ -359,13 +359,35 @@ def get_player_bets(player_name):
                     if team in eliminated_teams:
                         status = "incorrect"
                     else:
-                        # If the final hasn't been played yet, mark as pending
                         final_teams = results_data.get("Final", [])
                         winner = results_data.get("Winner", "")
-                        # Check for placeholders or empty final
                         final_not_played = not winner or any(t in ["N.N.", "", None] for t in final_teams)
                         if final_not_played:
-                            status = "pending"
+                            # Check live semi-finals for this team
+                            from scrape_semi_finals import scrape_with_requests as scrape_semi_finals_with_requests
+                            matches_1_2 = scrape_semi_finals_with_requests()
+                            is_live_correct = False
+                            is_live_wrong = False
+                            for m in matches_1_2:
+                                if (team == m["team1"] or team == m["team2"]) and m["status"] == "live":
+                                    # Determine if this team is currently winning
+                                    score = m.get("score", "")
+                                    if score and (":" in score or "-" in score):
+                                        score_clean = score.replace("-", ":")
+                                        parts = score_clean.split(":")
+                                        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                                            s1, s2 = int(parts[0]), int(parts[1])
+                                            if (team == m["team1"] and s1 > s2) or (team == m["team2"] and s2 > s1):
+                                                is_live_correct = True
+                                            elif (team == m["team1"] and s1 < s2) or (team == m["team2"] and s2 < s1):
+                                                is_live_wrong = True
+                                    break
+                            if is_live_correct:
+                                status = "live-correct"
+                            elif is_live_wrong:
+                                status = "live-wrong"
+                            else:
+                                status = "pending"
                         else:
                             if team in final_teams:
                                 status = "correct"
@@ -589,9 +611,9 @@ def refresh_all_data():
         
         # Semi-Finals winners (teams qualified for Final) → "Final"
         results["Final"] = sorted(set(winners_1_2))
-        
-        # Final teams and winner
-        if final_teams:
+
+        # Final teams and winner (only overwrite if both teams are valid)
+        if final_teams and all(t and t != "N.N." for t in final_teams):
             results["Final"] = final_teams
         if final_winner:
             results["Winner"] = final_winner
