@@ -40,3 +40,6 @@ Thumbs.db
 *_raw.html
 *_matches.html
 debug_*.html 
+
+# Ignore the bets data file to prevent accidental overwrites
+bets.csv 
