@@ -71,7 +71,7 @@ def fetch_matches():
                     match["winner"] = team2
                 else:
                     match["winner"] = "Draw"
-            except:
+            except:  # noqa: E722
                 match["status"] = "live"
                 match["score"] = score
 
