@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
+
 def scrape_final():
     url = "https://www.worldfootball.net/schedule/klub-wm-2025-finale/0/"
     response = requests.get(url)
@@ -43,16 +44,19 @@ def scrape_final():
             "team2": team2,
             "score": score,
             "status": status,
-            "winner": winner
+            "winner": winner,
         }
         matches.append(match)
     return matches
+
 
 if __name__ == "__main__":
     matches = scrape_final()
     print("\n📊 Final Match Summary:")
     for m in matches:
-        print(f"[{m['status'].upper()}] {m['team1']} {m['score']} {m['team2']} — Winner: {m['winner']}")
+        print(
+            f"[{m['status'].upper()}] {m['team1']} {m['score']} {m['team2']} — Winner: {m['winner']}"
+        )
     # Optionally, save to a file
     with open("final.json", "w", encoding="utf-8") as f:
-        json.dump(matches, f, indent=2, ensure_ascii=False) 
+        json.dump(matches, f, indent=2, ensure_ascii=False)

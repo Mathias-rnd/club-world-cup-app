@@ -40,16 +40,18 @@ for row in rows:
         goals = cols[5].find("b").text.strip()
         penalty = goals_text.split("(")[-1].split(")")[0] if "(" in goals_text else "0"
 
-        data.append({
-            "Rank": rank,
-            "Player": player,
-            "Country": country,
-            "CountryFlagURL": country_flag_url,
-            "Team": club_name,
-            "TeamLogoURL": club_logo_url,
-            "Goals": goals,
-            "Penalties": penalty
-        })
+        data.append(
+            {
+                "Rank": rank,
+                "Player": player,
+                "Country": country,
+                "CountryFlagURL": country_flag_url,
+                "Team": club_name,
+                "TeamLogoURL": club_logo_url,
+                "Goals": goals,
+                "Penalties": penalty,
+            }
+        )
 
         if len(data) >= 10:
             break
@@ -68,33 +70,3 @@ print(df)
 
 with open("top_scorers.json", "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
-
-
-
-
-# Name,1/8,1/4,1/2,Final,Winner,BestStriker
-# Mathias,FC Porto;Inter Miami CF;Paris Saint-Germain;Atletico Madrid;Bayern 
-# München;SL Benfica;Chelsea FC;Los Angeles FC;Inter;River Plate;Borussia 
-# Dortmund;Fluminense RJ;Manchester City;Juventus;Real Madrid;Salzburg,River 
-# Plate;Manchester City;Atletico Madrid;Bayern München;Paris Saint-Germain;SL 
-# Benfica;Real Madrid;Inter,Manchester City;Bayern München;Paris Saint-Germain;
-# Real Madrid,Paris Saint-Germain;Bayern München,Paris Saint-Germain,Kylian Mbappé
-# Stéphane,FC Porto;Palmeiras;Paris Saint-Germain;Atletico Madrid;Bayern München;
-# Boca Juniors;Chelsea FC;Flamengo RJ;Inter;River Plate;Borussia Dortmund;
-# Fluminense RJ;Manchester City;Juventus;Real Madrid;Salzburg,Inter;Manchester 
-# City;Atletico Madrid;Bayern München;Paris Saint-Germain;Boca Juniors;Real 
-# Madrid;Borussia Dortmund,Manchester City;Bayern München;Paris Saint-Germain;
-# Real Madrid,Bayern München;Real Madrid,Real Madrid,Kylian Mbappé
-# Arthur,FC Porto;Palmeiras;Paris Saint-Germain;Botafogo - RJ;Bayern München;SL 
-# Benfica;Chelsea FC;Flamengo RJ;Inter;River Plate;Borussia Dortmund;Fluminense 
-# RJ;Manchester City;Juventus;Real Madrid;Al Hilal,Paris Saint-Germain;Real 
-# Madrid;Manchester City;Fluminense RJ;Flamengo RJ;Bayern München;Palmeiras;
-# Borussia Dortmund,Paris Saint-Germain;Bayern München;Manchester City;Real 
-# Madrid,Paris Saint-Germain;Bayern München,Paris Saint-Germain,Michael Olise
-# Yovan,FC Porto;Inter Miami CF;Paris Saint-Germain;Atletico Madrid;Bayern 
-# München;Boca Juniors;Chelsea FC;Flamengo RJ;Inter;River Plate;Borussia Dortmund;
-# Fluminense RJ;Manchester City;Juventus;Real Madrid;Al Hilal,Inter;Manchester 
-# City;Real Madrid;Atletico Madrid;Bayern München;Paris Saint-Germain;Boca 
-# Juniors;Borussia Dortmund,Real Madrid;Manchester City;Paris Saint-Germain;
-# Bayern München,Bayern München;Paris Saint-Germain,Paris Saint-Germain,Khvicha 
-# Kvaratskhelia

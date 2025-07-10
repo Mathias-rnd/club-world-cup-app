@@ -4,10 +4,12 @@ from bs4 import BeautifulSoup
 URL = "https://www.worldfootball.net/schedule/klub-wm-2025-viertelfinale/0/"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+
 def clean(cell):
     for img in cell.find_all("img"):
         img.decompose()
     return cell.get_text(strip=True)
+
 
 def fetch_matches():
     r = requests.get(URL, headers=HEADERS)
@@ -42,7 +44,7 @@ def fetch_matches():
             "team2": team2,
             "status": "upcoming",
             "score": None,
-            "winner": None
+            "winner": None,
         }
 
         if score == "-":
@@ -77,23 +79,34 @@ def fetch_matches():
 
     return matches
 
+
 def display(matches):
     print("\n📊 Quarter Finals Match Summary:")
     for m in matches:
         if m["status"] == "finished":
-            print(f"[FINAL] {m['team1']} {m['score']} {m['team2']} — Winner: {m['winner']}")
+            print(
+                f"[FINAL] {m['team1']} {m['score']} {m['team2']} — Winner: {m['winner']}"
+            )
         elif m["status"] == "live":
-            print(f"[LIVE]  {m['team1']} {m['score']} {m['team2']} — Leading: {m['winner']}")
+            print(
+                f"[LIVE]  {m['team1']} {m['score']} {m['team2']} — Leading: {m['winner']}"
+            )
         else:
             print(f"[UPCOMING] {m['date']} {m['time']}: {m['team1']} vs {m['team2']}")
+
 
 if __name__ == "__main__":
     matches = fetch_matches()
     display(matches)
 
+
 def scrape_with_requests(*args, **kwargs):
     matches = fetch_matches()
-    print(f"[DEBUG] scrape_with_requests fetched {len(matches)} quarter finals matches.")
+    print(
+        f"[DEBUG] scrape_with_requests fetched {len(matches)} quarter finals matches."
+    )
     for m in matches:
-        print(f"[DEBUG] {m['status'].upper()}: {m['team1']} vs {m['team2']} | Winner: {m['winner']}")
-    return matches 
+        print(
+            f"[DEBUG] {m['status'].upper()}: {m['team1']} vs {m['team2']} | Winner: {m['winner']}"
+        )
+    return matches
